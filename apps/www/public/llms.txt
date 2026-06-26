@@ -1,0 +1,45 @@
+# agentreflex
+
+> agentreflex is the open commons of **reflexes** for AI coding agents. A reflex is
+> deterministic logic that fires *before* an agent acts on a tool call — it can block,
+> ask, modify, or pass. Write an instinct once and it compiles into every agent's
+> native hook, so the same guardrail fires across Claude Code, Cursor, Copilot CLI,
+> Gemini CLI, Windsurf, and OpenCode (and as an advisory AGENTS.md everywhere else).
+
+## What it is
+
+- **The category:** the missing third layer of agent tooling. Instructions (AGENTS.md)
+  say what an agent should know; capabilities (MCP) say what it can do; **reflexes**
+  (agentreflex) decide what actually happens the moment it acts.
+- **A reflex is a folder, not a package.** Any folder with a `reflex.json` is a valid
+  reflex; logic can be TypeScript, JavaScript, Python, or a shell script (the contract
+  is JSON over stdin/stdout).
+- **Decisions:** a reflex returns `pass`, `deny`, `ask`, or `modify`. Adapters
+  translate that to each agent's native hook format.
+- **Trust model:** reflexes run in your dev loop, so `agentreflex add` shows the code
+  and the reflex's declared capabilities before wiring anything in, and the dispatcher
+  fails open — it never blocks or crashes your agent because of its own error.
+
+## Get started
+
+- Install: `npx agentreflex init` wires every agent in your repo to your `.reflex/` folder.
+- Add a reflex: `npx agentreflex add <name>` (catalog), `add github:user/repo`, `add ./path`, or `add https://…`.
+- Packages: `agentreflex` (CLI), `@agentreflex/core` (runtime), `@agentreflex/adapters`. MIT licensed.
+
+## Official reflexes (examples)
+
+- no-force-push — blocks `git push --force` on shared branches
+- no-rm-rf — blocks recursive `rm` of dangerous targets
+- no-secrets — blocks reading or writing `.env` and credential files
+- ask-on-prod — pauses before commands that deploy or publish to production
+- stay-in-repo — blocks edits to files outside the project root
+- conventional-commits — enforces Conventional Commits on commit messages
+- recover — snapshots files before the agent edits them, so any change is undoable
+- abide — declare your human↔agent working agreement once; deny/ask enforced everywhere
+
+## Links
+
+- Home: https://agentreflex.dev
+- Docs: https://docs.agentreflex.dev
+- Source & official reflexes: https://github.com/agentreflex/agentreflex
+- Community catalog: https://github.com/agentreflex/awesome-reflexes
