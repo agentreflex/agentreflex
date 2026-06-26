@@ -42,6 +42,17 @@ jobs:
           for dir in packages/core packages/adapters packages/cli; do
             (cd "$dir" && pnpm pack --pack-destination "$RUNNER_TEMP/tarballs")
           done
-          for tgz in "$RUNNER_TEMP"/tarballs/*.tgz; do
-            npm publish "$tgz" --access public --provenance
+          # Publish dependencies before dependents so the registry is never left with a
+          # package whose deps don't exist yet. Skip any version already on npm so a
+          # re-run after a partial failure is safe (idempotent).
+          for dir in packages/core packages/adapters packages/cli; do
+            name=$(node -p "require('./$dir/package.json').name")
+            version=$(node -p "require('./$dir/package.json').version")
+            if npm view "$name@$version" version >/dev/null 2>&1; then
+              echo "$name@$version already published — skipping"
+              continue
+            fi
+            slug=${name#@agentreflex/}
+            if [ "$slug" = "agentreflex" ]; then file="agentreflex-$version.tgz"; else file="agentreflex-$slug-$version.tgz"; fi
+            npm publish "$RUNNER_TEMP/tarballs/$file" --access public --provenance
           done

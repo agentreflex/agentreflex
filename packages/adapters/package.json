@@ -18,6 +18,12 @@
   "publishConfig": {
     "access": "public"
   },
+  "homepage": "https://agentreflex.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentreflex/agentreflex.git",
+    "directory": "packages/adapters"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"

@@ -25,7 +25,11 @@
     "agents-md"
   ],
   "homepage": "https://agentreflex.dev",
-  "repository": "https://github.com/agentreflex/agentreflex",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/agentreflex/agentreflex.git",
+    "directory": "packages/cli"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit"
