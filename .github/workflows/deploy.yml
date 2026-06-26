@@ -1,0 +1,74 @@
+name: deploy
+
+# Sites deploy continuously (not on npm release — a website isn't a versioned
+# artifact), but each only when its own files change. Gated on the DEPLOY_ENABLED
+# repo variable so it stays dormant until the Cloudflare secrets are configured.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      www: ${{ steps.filter.outputs.www }}
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            www:
+              - 'apps/www/**'
+              - 'reflexes/**'
+              - 'scripts/build-registry.mjs'
+              - 'pnpm-lock.yaml'
+            docs:
+              - 'apps/docs/**'
+              - 'pnpm-lock.yaml'
+
+  www:
+    needs: changes
+    if: ${{ vars.DEPLOY_ENABLED == 'true' && (needs.changes.outputs.www == 'true' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agentreflex/www build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/www
+          command: pages deploy --branch=main
+
+  docs:
+    needs: changes
+    if: ${{ vars.DEPLOY_ENABLED == 'true' && (needs.changes.outputs.docs == 'true' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @agentreflex/docs build
+      - uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          workingDirectory: apps/docs
+          command: pages deploy --branch=main
