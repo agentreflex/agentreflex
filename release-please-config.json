@@ -6,7 +6,11 @@
   "packages": {
     "packages/core": { "package-name": "@agentreflex/core", "release-as": "0.1.0" },
     "packages/adapters": { "package-name": "@agentreflex/adapters", "release-as": "0.1.0" },
-    "packages/cli": { "package-name": "agentreflex", "extra-files": ["src/cli.ts"], "release-as": "0.1.0" }
+    "packages/cli": {
+      "package-name": "agentreflex",
+      "extra-files": ["src/cli.ts"],
+      "release-as": "0.1.0"
+    }
   },
   "plugins": [
     {

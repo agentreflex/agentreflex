@@ -6,5 +6,11 @@
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 100 },
   "linter": { "enabled": true, "rules": { "recommended": true } },
-  "javascript": { "formatter": { "quoteStyle": "double", "semicolons": "always" } }
+  "javascript": { "formatter": { "quoteStyle": "double", "semicolons": "always" } },
+  "overrides": [
+    {
+      "include": ["**/package.json", ".release-please-manifest.json"],
+      "formatter": { "enabled": false }
+    }
+  ]
 }
