@@ -1,6 +1,6 @@
 {
   "name": "@agentreflex/core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "The harness-agnostic event/decision model and reflex authoring API for agentreflex.",
   "license": "MIT",
   "type": "module",

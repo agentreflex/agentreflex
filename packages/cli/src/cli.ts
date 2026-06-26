@@ -16,7 +16,7 @@ import {
 } from "./load.js";
 import { amber, banner, bar, bold, cyan, dim, head, lime, mark, pad, pill, white } from "./ui.js";
 
-const VERSION = "0.1.0"; // x-release-please-version
+const VERSION = "0.1.1"; // x-release-please-version
 const REGISTRY_URL = "https://agentreflex.dev/registry/registry.json";
 
 type Opts = Record<string, string | boolean>;

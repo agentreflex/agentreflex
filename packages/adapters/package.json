@@ -1,6 +1,6 @@
 {
   "name": "@agentreflex/adapters",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Per-harness hook adapters (Claude, Copilot, Cursor, Gemini, Codex) for agentreflex.",
   "license": "MIT",
   "type": "module",

@@ -1,5 +1,5 @@
 {
-  "packages/core": "0.1.0",
-  "packages/adapters": "0.1.0",
-  "packages/cli": "0.1.0"
+  "packages/core": "0.1.1",
+  "packages/adapters": "0.1.1",
+  "packages/cli": "0.1.1"
 }
