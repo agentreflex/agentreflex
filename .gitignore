@@ -12,7 +12,8 @@ node_modules/
 dist/
 build/
 out/
-lib/
+# NOTE: do not ignore a bare `lib/` — it swallows apps' source (apps/*/lib).
+# Packages build to dist/. Scope any future lib output to packages/*/lib/.
 *.tsbuildinfo
 .tshy/
 .tshy-build/
