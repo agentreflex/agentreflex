@@ -1,0 +1,51 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/neutral.css";
+@import "fumadocs-ui/css/preset.css";
+
+/* agentreflex brand — warm paper + terracotta ember (see web-art-direction) */
+:root {
+  --color-fd-background: #f4efe6;
+  --color-fd-foreground: #2a241b;
+  --color-fd-popover: #f4efe6;
+  --color-fd-popover-foreground: #2a241b;
+  --color-fd-card: #efe9dd;
+  --color-fd-card-foreground: #2a241b;
+  --color-fd-muted: #e7e0d1;
+  --color-fd-muted-foreground: #6b6353;
+  --color-fd-border: #ded6c5;
+  --color-fd-accent: #e7e0d1;
+  --color-fd-accent-foreground: #2a241b;
+  --color-fd-secondary: #e7e0d1;
+  --color-fd-secondary-foreground: #2a241b;
+  --color-fd-primary: #bc5430;
+  --color-fd-primary-foreground: #f7f3ec;
+  --color-fd-ring: #bc5430;
+}
+
+.dark {
+  --color-fd-background: #1a1714;
+  --color-fd-foreground: #ece5d8;
+  --color-fd-popover: #1a1714;
+  --color-fd-popover-foreground: #ece5d8;
+  --color-fd-card: #221d19;
+  --color-fd-card-foreground: #ece5d8;
+  --color-fd-muted: #2a241f;
+  --color-fd-muted-foreground: #a99f8b;
+  --color-fd-border: #332c25;
+  --color-fd-accent: #2a241f;
+  --color-fd-accent-foreground: #ece5d8;
+  --color-fd-secondary: #2a241f;
+  --color-fd-secondary-foreground: #ece5d8;
+  --color-fd-primary: #d98b5f;
+  --color-fd-primary-foreground: #1a1714;
+  --color-fd-ring: #d98b5f;
+}
+
+/* Mono-forward editorial voice: headings carry the brand mono. */
+#nd-docs-layout h1,
+#nd-docs-layout h2,
+#nd-docs-layout h3,
+#nd-docs-layout h4 {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  letter-spacing: -0.02em;
+}

@@ -1,9 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="170" height="26" viewBox="0 0 170 26" fill="none" role="img" aria-label="agentreflex">
-  <g stroke="#d98b5f" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5 6 L15 13 L5 20"/>
-    <line x1="21" y1="5" x2="21" y2="21" stroke-opacity="0.45"/>
-  </g>
-  <text x="33" y="19" font-family="'Geist Mono', 'SF Mono', ui-monospace, monospace" font-size="18" letter-spacing="-0.5">
-    <tspan fill="#6b6353">agent</tspan><tspan fill="#f4efe6" font-weight="700">reflex</tspan>
-  </text>
-</svg>

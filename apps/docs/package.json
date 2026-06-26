@@ -2,10 +2,31 @@
   "name": "@agentreflex/docs",
   "version": "0.0.0",
   "private": true,
-  "description": "agentreflex documentation (Mintlify)",
+  "description": "agentreflex documentation (Fumadocs)",
+  "type": "module",
   "scripts": {
-    "dev": "mint dev --port 3333",
-    "test": "mint broken-links",
-    "broken-links": "mint broken-links"
+    "dev": "next dev --port 3333",
+    "build": "next build",
+    "start": "next start",
+    "postinstall": "fumadocs-mdx"
+  },
+  "dependencies": {
+    "fumadocs-core": "^16.10.5",
+    "fumadocs-mdx": "^15.0.12",
+    "fumadocs-ui": "^16.10.5",
+    "geist": "^1.3.1",
+    "next": "^16.2.9",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/mdx": "^2.0.13",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.0"
   }
 }

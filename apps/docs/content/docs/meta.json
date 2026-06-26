@@ -1,0 +1,12 @@
+{
+  "pages": [
+    "---Get Started---",
+    "index",
+    "quickstart",
+    "concepts",
+    "guides",
+    "reference",
+    "---Community---",
+    "contributing"
+  ]
+}

@@ -20,20 +20,20 @@
     },
     {
       "label": "docs: dev",
-      "detail": "Run the Mintlify docs (docs.agentreflex.dev) on http://localhost:3333",
+      "detail": "Run the Fumadocs docs (docs.agentreflex.dev) on http://localhost:3333",
       "type": "shell",
-      "command": "npx mint dev --port 3333",
-      "options": { "cwd": "${workspaceFolder}/apps/docs" },
+      "command": "pnpm --filter @agentreflex/docs dev",
+      "options": { "cwd": "${workspaceFolder}" },
       "isBackground": true,
       "presentation": { "group": "agentreflex", "panel": "dedicated", "reveal": "always" },
       "problemMatcher": []
     },
     {
-      "label": "docs: test (broken links)",
-      "detail": "Validate the docs — fails on broken internal links",
+      "label": "docs: build (static export)",
+      "detail": "Build the docs to apps/docs/out for Cloudflare Pages",
       "type": "shell",
-      "command": "npx mint broken-links",
-      "options": { "cwd": "${workspaceFolder}/apps/docs" },
+      "command": "pnpm --filter @agentreflex/docs build",
+      "options": { "cwd": "${workspaceFolder}" },
       "presentation": { "group": "agentreflex", "panel": "dedicated", "reveal": "always" },
       "problemMatcher": []
     },

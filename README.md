@@ -97,7 +97,7 @@ Browse them all on [agentreflex.dev](https://agentreflex.dev/#commons).
 ```
 apps/
   www/          # agentreflex.dev  (Next.js + Tailwind v4)
-  docs/         # docs.agentreflex.dev  (Mintlify)
+  docs/         # docs.agentreflex.dev  (Fumadocs, Next.js)
 packages/
   core/         # @agentreflex/core — event/decision model + authoring API
   adapters/     # per-agent hook adapters

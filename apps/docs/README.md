@@ -1,35 +1,50 @@
 # agentreflex docs
 
-Documentation site for [agentreflex](https://agentreflex.dev), built with [Mintlify](https://mintlify.com). Deploys to **docs.agentreflex.dev**.
+Documentation site for [agentreflex](https://agentreflex.dev), built with
+[Fumadocs](https://fumadocs.dev) (Next.js). Static-exported and deployed to
+**docs.agentreflex.dev** on Cloudflare Pages — the same pipeline as the marketing
+site.
 
 ## Local development
 
 From this package (`apps/docs`):
 
 ```bash
-# install the Mintlify CLI once
-npm i -g mint
-
-# start the local dev server (reads docs.json)
-mintlify dev
+pnpm dev      # http://localhost:3333
 ```
 
-The site is served at `http://localhost:3000`. Edits to `.mdx` files and `docs.json` hot-reload.
+Edits to `.mdx` files and `meta.json` hot-reload.
 
 ## Structure
 
 ```
 apps/docs/
-  docs.json            # Mintlify config (navigation, theme, navbar)
-  introduction.mdx
-  quickstart.mdx
-  concepts/            # reflexes, events, decisions, capability-matrix, trust-model
-  guides/              # writing-a-reflex, distribution
-  reference/           # cli, spec
-  contributing.mdx
-  logo/                # logo + favicon assets (placeholders)
+  source.config.ts          # Fumadocs MDX collections + schemas
+  lib/source.ts             # content loader (baseUrl: /docs)
+  app/
+    layout.tsx              # RootProvider, fonts, brand theme, static search
+    docs/                   # docs layout + [[...slug]] page
+    api/search/route.ts     # static Orama search index (staticGET)
+  content/docs/
+    index.mdx · quickstart.mdx · contributing.mdx
+    concepts/ guides/ reference/
+    meta.json               # navigation order + groups (per folder)
+  public/_redirects         # / -> /docs (Cloudflare Pages)
 ```
 
-## Deployment
+## Build
 
-Pushes to the default branch deploy automatically to **docs.agentreflex.dev** via the Mintlify GitHub integration. No manual build step is required.
+```bash
+pnpm build    # next build with output: export -> ./out
+```
+
+`out/` is a fully static site (HTML + a prebuilt client-side search index at
+`/api/search`), deployable as plain assets.
+
+## Deployment (Cloudflare Pages)
+
+- **Build command:** `pnpm --filter @agentreflex/docs build`
+- **Build output directory:** `apps/docs/out`
+- **Root directory:** repo root · **Env:** `NODE_VERSION=22`
+
+Pushes to the default branch deploy automatically once the project is connected.
