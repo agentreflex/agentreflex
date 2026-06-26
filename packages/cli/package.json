@@ -1,6 +1,6 @@
 {
   "name": "agentreflex",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "Give your AI agents reflexes — write the logic once, enforce it on every coding agent.",
   "license": "MIT",
   "type": "module",
@@ -8,7 +8,9 @@
     "agentreflex": "./dist/cli.js",
     "arx": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "ai-agent",
     "agentreflex",
