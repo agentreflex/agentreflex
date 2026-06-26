@@ -25,8 +25,11 @@ next-env.d.ts
 # generated reflex catalog (built into the www static output)
 apps/www/public/registry/
 
-# ─── Docs (apps/docs · Mintlify) ────────────────────────────────
-.mintlify/
+# ─── Docs (apps/docs · Fumadocs) ────────────────────────────────
+.source/
+
+# ─── Cloudflare Wrangler ────────────────────────────────────────
+.wrangler/
 
 # ─── Monorepo / tooling caches ──────────────────────────────────
 .turbo/

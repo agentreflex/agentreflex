@@ -1,0 +1,6 @@
+# Cloudflare Pages config for the docs site (docs.agentreflex.dev).
+# With pages_build_output_dir set, `wrangler pages deploy` needs no flags:
+#   pnpm --filter @agentreflex/docs deploy   (builds, then deploys ./out)
+name = "agentreflex-docs"
+pages_build_output_dir = "out"
+compatibility_date = "2026-06-26"

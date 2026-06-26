@@ -8,6 +8,7 @@
     "dev": "next dev --port 3333",
     "build": "next build",
     "start": "next start",
+    "deploy": "pnpm build && npx wrangler pages deploy",
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
