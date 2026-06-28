@@ -5,9 +5,10 @@
  * Windows: the hook crashing at module load (surfacing an error to the agent)
  * instead of dispatching, and the reflex not loading because of path handling.
  *
- * Payloads are built with JSON.stringify, so a Windows `cwd` with backslashes is
- * correctly escaped on the wire and round-trips — exactly what a well-formed agent
- * hook sends. If this passes on windows-latest, the dispatcher is sound there.
+ * Uses a self-contained inline reflex (no imports), so it depends only on the
+ * built CLI — not on the registry bundles. Payloads are built with JSON.stringify,
+ * so a Windows `cwd` with backslashes is correctly escaped on the wire and
+ * round-trips — exactly what a well-formed agent hook sends.
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -17,20 +18,28 @@ import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const cli = path.join(repo, "packages", "cli", "dist", "cli.js");
-const bundled = path.join(repo, "apps", "www", "public", "registry", "no-force-push.mjs");
 
-for (const f of [cli, bundled])
-  if (!fs.existsSync(f)) {
-    console.error(`missing ${path.relative(repo, f)} — run pnpm build && pnpm registry:build`);
-    process.exit(1);
-  }
+if (!fs.existsSync(cli)) {
+  console.error(`missing ${path.relative(repo, cli)} — run pnpm build first`);
+  process.exit(1);
+}
+
+const REFLEX = `export default {
+  name: "smoke-block",
+  onToolCall(ctx) {
+    if (ctx.tool === "Bash" && /--force/.test(ctx.command ?? ""))
+      return { action: "deny", reason: "smoke: no force-push" };
+    return { action: "pass" };
+  },
+};
+`;
 
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "arx-smoke-"));
 fs.mkdirSync(path.join(tmp, ".reflex"), { recursive: true });
-fs.copyFileSync(bundled, path.join(tmp, ".reflex", "no-force-push.mjs"));
+fs.writeFileSync(path.join(tmp, ".reflex", "smoke-block.mjs"), REFLEX);
 fs.writeFileSync(
   path.join(tmp, ".reflex", "config.json"),
-  JSON.stringify({ reflexes: ["./no-force-push.mjs"] }),
+  JSON.stringify({ reflexes: ["./smoke-block.mjs"] }),
 );
 
 const runHook = (payload) =>
@@ -63,7 +72,7 @@ check(
   `stdout: ${JSON.stringify(pass.stdout)}`,
 );
 
-// 3. Empty / garbage payload must fail open — never crash the agent.
+// 3. Empty stdin must fail open — never crash the agent.
 const empty = spawnSync(process.execPath, [cli, "hook", "--agent", "claude"], {
   input: "",
   encoding: "utf8",
