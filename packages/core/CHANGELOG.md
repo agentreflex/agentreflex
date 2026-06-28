@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/agentreflex/agentreflex/compare/core-v0.1.1...core-v0.2.0) (2026-06-28)
+
+
+### Features
+
+* **core:** per-reflex configuration via config.json `with` ([cf51d92](https://github.com/agentreflex/agentreflex/commit/cf51d926a5345af69385d80bac4118c216a2d7d3))
+
 ## [0.1.1](https://github.com/agentreflex/agentreflex/compare/core-v0.1.0...core-v0.1.1) (2026-06-26)
 
 
