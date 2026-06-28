@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.1](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.3.0...agentreflex-v0.3.1) (2026-06-28)
+
+
+### Bug Fixes
+
+* **cli:** keep the hook dispatcher from crashing at startup; test on Windows ([21f5132](https://github.com/agentreflex/agentreflex/commit/21f513267cdad52c374376d4333d971739642da6))
+
 ## [0.3.0](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.2.0...agentreflex-v0.3.0) (2026-06-28)
 
 
