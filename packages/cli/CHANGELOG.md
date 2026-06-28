@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.1.1...agentreflex-v0.2.0) (2026-06-28)
+
+
+### Features
+
+* **cli:** contributor DevX — real `dev` test harness, scaffold, validate ([19a76f1](https://github.com/agentreflex/agentreflex/commit/19a76f1b30b1ce5c752b43ae8dcfdaf17551e045))
+
 ## [0.1.1](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.1.0...agentreflex-v0.1.1) (2026-06-26)
 
 
