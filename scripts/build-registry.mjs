@@ -30,7 +30,13 @@ const entries = [];
 for (const name of fs.readdirSync(reflexesDir).sort()) {
   const manifestPath = path.join(reflexesDir, name, "reflex.json");
   const entry = path.join(reflexesDir, name, "dist", "index.js");
-  if (!fs.existsSync(manifestPath) || !fs.existsSync(entry)) continue;
+  // Not a reflex dir — skip silently. But a reflex with no built entry is a real
+  // error: it would vanish from the catalog unnoticed. Fail loudly instead.
+  if (!fs.existsSync(manifestPath)) continue;
+  if (!fs.existsSync(entry))
+    throw new Error(
+      `reflexes/${name}: reflex.json present but dist/index.js missing — run its build`,
+    );
 
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   await esbuild.build({

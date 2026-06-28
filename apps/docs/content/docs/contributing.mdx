@@ -7,24 +7,38 @@ Two ways to get a reflex in front of other people: contribute it to the *commons
 
 ## Official reflexes
 
-Official reflexes live in [`/reflexes`](https://github.com/agentreflex/agentreflex) and are installable by short name (`arx add <name>`). Each is a small package:
+Official reflexes live in [`/reflexes`](https://github.com/agentreflex/agentreflex) and are installable by short name (`arx add <name>`). Each is a small package — and the monorepo gives you three commands to scaffold, run, and validate one without hand-wiring anything.
 
 ```bash
-reflexes/no-force-push/
-  src/index.ts     # defineReflex({ name, onToolCall })
-  reflex.json      # manifest: title, description, capabilities, tags
-  test/            # at least one test
-  package.json
-  README.md
+git clone https://github.com/agentreflex/agentreflex && cd agentreflex
+pnpm install
 ```
 
-To contribute one:
+**1. Scaffold it.** Generates the full package — `src/index.ts`, `reflex.json`, `test/`, `package.json`, `tsconfig.json`, `README.md` — with a runnable test already in place.
 
-1. Fork `agentreflex/agentreflex`.
-2. Add `reflexes/<name>/` with the files above.
-3. Make sure `pnpm test` passes, then open a PR.
+```bash
+pnpm reflex:new no-rm-rf --title "No rm -rf" --desc "Blocks recursive rm of dangerous targets."
+```
 
-Official reflexes are held to a higher bar — single-purpose, accurate `reflex.json` capabilities, and a test that proves both the catch and the non-catch. Maintainers review the source before merge, and the catalog is rebuilt on release.
+**2. Write + run it.** Edit `reflexes/no-rm-rf/src/index.ts`, then build-and-simulate in one step. Any `arx dev` flag passes through, so you can test file-based reflexes too:
+
+```bash
+pnpm reflex:dev no-rm-rf "rm -rf /"            # a shell command
+pnpm reflex:dev no-secrets --tool Read --paths .env   # a file-based reflex
+```
+
+For a tight loop, run `pnpm --filter ./reflexes/no-rm-rf build --watch` in one terminal and `arx dev --reflex no-rm-rf …` in another.
+
+**3. Test + validate before you PR.**
+
+```bash
+pnpm test no-rm-rf      # your catch + non-catch tests
+pnpm reflex:check       # validates every reflex: manifest, declared capabilities vs code, tests, README
+```
+
+`reflex:check` is what CI runs — it fails if the manifest is wrong, a declared decision is never returned, the entry doesn't build, or the test/README is missing. Get it green, then open a PR.
+
+Official reflexes are held to a higher bar: single-purpose, an accurate `reflex.json` (the `$schema` field gives you live validation in your editor), and a test that proves both the catch and the non-catch. Maintainers review the source before merge, and the catalog is rebuilt on release.
 
 ## Community reflexes
 

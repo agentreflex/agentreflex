@@ -2,9 +2,10 @@
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { ADAPTERS, getAdapter, resolveAdapters } from "@agentreflex/adapters";
-import { type ToolCallContext, runToolCall, runToolResult } from "@agentreflex/core";
-import type { Scope } from "@agentreflex/core";
+import { runToolCall, runToolResult } from "@agentreflex/core";
+import type { AgentName, Reflex, Scope } from "@agentreflex/core";
 import * as p from "@clack/prompts";
 import {
   type Config,
@@ -20,7 +21,17 @@ const VERSION = "0.1.1"; // x-release-please-version
 const REGISTRY_URL = "https://agentreflex.dev/registry/registry.json";
 
 type Opts = Record<string, string | boolean>;
-const VALUE_FLAGS = new Set(["--agent", "--scope", "--dir", "--registry"]);
+const VALUE_FLAGS = new Set([
+  "--agent",
+  "--scope",
+  "--dir",
+  "--registry",
+  "--tool",
+  "--paths",
+  "--event",
+  "--reflex",
+  "--file",
+]);
 
 function parseArgs(rest: string[]): { opts: Opts; pos: string[] } {
   const opts: Opts = {};
@@ -75,6 +86,19 @@ async function readStdin(): Promise<string> {
 
 // ── hook: the dispatcher each agent calls (machine-facing, silent, fail-open) ──
 async function cmdHook(agent: string): Promise<void> {
+  // A human ran this in a terminal. Real agent invocations capture stdout (not a
+  // TTY) and feed a payload on stdin; by hand it just looks like nothing happens —
+  // pass is silent and a deny prints raw JSON meant for the agent. Point them at
+  // the tool actually meant for testing, and leave the machine path untouched.
+  if (process.stdout.isTTY) {
+    console.log(head("hook"));
+    console.log(`  ${dim("this is the dispatcher your agents call — not a manual test tool.")}`);
+    console.log(`  ${dim("to test a reflex yourself, use")} ${lime("arx dev")}${dim(":")}`);
+    console.log(
+      `  ${lime('arx dev "git push --force"')}   ${dim("·")}   ${lime("arx dev --tool Read --paths .env")}\n`,
+    );
+    return;
+  }
   try {
     const raw = await readStdin();
     if (!raw.trim()) return;
@@ -298,28 +322,109 @@ function cmdNew(name: string, cwd: string): void {
   console.log(`  ${dim("edit it — it fires on the next tool call, no rebuild.")}`);
 }
 
-async function cmdDev(command: string, cwd: string): Promise<void> {
-  const reflexes = await loadReflexes(cwd);
+/** Walk up to the agentreflex monorepo root (the dir with /reflexes + workspace). */
+function findRepoRoot(start: string): string | null {
+  let dir = start;
+  for (;;) {
+    if (
+      fs.existsSync(path.join(dir, "pnpm-workspace.yaml")) &&
+      fs.existsSync(path.join(dir, "reflexes"))
+    )
+      return dir;
+    const parent = path.dirname(dir);
+    if (parent === dir) return null;
+    dir = parent;
+  }
+}
+
+async function importReflexFile(abs: string): Promise<Reflex | null> {
+  const mod = (await import(pathToFileURL(abs).href)) as { default?: Reflex; reflex?: Reflex };
+  return mod.default ?? mod.reflex ?? null;
+}
+
+/** Resolve which reflexes `dev` should run: a single source via --file/--reflex,
+ *  or the project's wired .reflex/ set. */
+async function resolveDevReflexes(
+  opts: Opts,
+  cwd: string,
+): Promise<{ reflexes: Reflex[]; label: string }> {
+  if (typeof opts.file === "string" && opts.file) {
+    const abs = path.resolve(cwd, opts.file);
+    if (!fs.existsSync(abs)) throw new Error(`no such file: ${opts.file}`);
+    const r = await importReflexFile(abs);
+    if (!r) throw new Error(`no reflex default-export in ${opts.file}`);
+    return { reflexes: [r], label: path.basename(abs) };
+  }
+  if (typeof opts.reflex === "string" && opts.reflex) {
+    const root = findRepoRoot(cwd);
+    if (!root) throw new Error("--reflex only works inside the agentreflex monorepo");
+    const rdir = path.join(root, "reflexes", opts.reflex);
+    if (!fs.existsSync(path.join(rdir, "reflex.json")))
+      throw new Error(`no reflex named '${opts.reflex}' in /reflexes`);
+    const entry = path.join(rdir, "dist", "index.js");
+    if (!fs.existsSync(entry))
+      throw new Error(`build it first → pnpm --filter ./reflexes/${opts.reflex} build`);
+    const r = await importReflexFile(entry);
+    if (!r) throw new Error(`no reflex default-export in reflexes/${opts.reflex}`);
+    return { reflexes: [r], label: opts.reflex };
+  }
+  return { reflexes: await loadReflexes(cwd), label: ".reflex/" };
+}
+
+// ── dev: simulate any tool call against your reflexes ──
+async function cmdDev(opts: Opts, pos: string[], cwd: string): Promise<void> {
   console.log(head("dev"));
-  if (reflexes.length === 0) {
-    console.log(`  ${dim("no reflexes yet — run")} ${lime("arx init")}\n`);
+  let reflexes: Reflex[];
+  let label: string;
+  try {
+    ({ reflexes, label } = await resolveDevReflexes(opts, cwd));
+  } catch (err) {
+    console.log(`  ${dim((err as Error).message)}\n`);
     return;
   }
-  const ctx: ToolCallContext = {
-    event: "onToolCall",
-    agent: "claude",
-    tool: "Bash",
-    command,
-    paths: [],
-    cwd,
-    raw: {},
-  };
-  const d = await runToolCall(reflexes, ctx);
+  if (reflexes.length === 0) {
+    console.log(
+      `  ${dim("no reflexes — run")} ${lime("arx init")} ${dim("or pass")} ${lime("--reflex <name>")}\n`,
+    );
+    return;
+  }
+
+  const tool = typeof opts.tool === "string" && opts.tool ? opts.tool : "Bash";
+  const agent = (typeof opts.agent === "string" && opts.agent ? opts.agent : "claude") as AgentName;
+  const command = pos.length ? pos.join(" ") : undefined;
+  const paths =
+    typeof opts.paths === "string" && opts.paths
+      ? opts.paths
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : [];
+  const event = opts.event === "onToolResult" ? "onToolResult" : "onToolCall";
+
+  const subject = command
+    ? `${dim("$")} ${white(command)}`
+    : `${white(tool)}${paths.length ? ` ${dim(paths.join(" "))}` : ""}`;
+  console.log(`  ${dim(`${label} · ${agent} · ${tool} · ${event}`)}`);
+  console.log(`  ${subject}`);
+
+  if (event === "onToolResult") {
+    await runToolResult(reflexes, { event, agent, tool, command, paths, cwd, raw: {} });
+    console.log(`  ${mark} ${dim("onToolResult ran (side effects only — never blocks)")}\n`);
+    return;
+  }
+
+  const d = await runToolCall(reflexes, { event, agent, tool, command, paths, cwd, raw: {} });
   const verdict =
-    d.action === "deny" ? lime("deny") : d.action === "ask" ? amber("ask") : dim("pass");
-  console.log(`  ${dim("$")} ${white(command)}`);
+    d.action === "deny"
+      ? lime("deny")
+      : d.action === "ask"
+        ? amber("ask")
+        : d.action === "modify"
+          ? cyan("modify")
+          : dim("pass");
   const reason = "reason" in d && d.reason ? dim(` — ${d.reason}`) : "";
-  console.log(`  ${mark} ${verdict}${reason}\n`);
+  const args = d.action === "modify" ? dim(` ${JSON.stringify(d.args)}`) : "";
+  console.log(`  ${mark} ${verdict}${reason}${args}\n`);
 }
 
 function help(): void {
@@ -334,9 +439,11 @@ function help(): void {
       row("new", "scaffold a new reflex"),
       row("install", "wire the dispatcher into your agents"),
       row("doctor", "show the capability matrix for your agents"),
-      row("dev", "test a command against your reflexes"),
+      row("dev", "simulate a tool call against your reflexes"),
       "",
-      `  ${dim("flags")}  ${dim("--dir <path>")} ${dim("run in another folder")}  ${dim("·")} ${dim("--agent")} ${dim("·")} ${dim("--scope")}`,
+      `  ${dim("dev")}    ${dim('arx dev "git push --force"')}  ${dim("·")} ${dim("--tool Read --paths .env")}`,
+      `         ${dim("--reflex <name>")} ${dim("·")} ${dim("--file ./r.mjs")} ${dim("·")} ${dim("--agent")} ${dim("·")} ${dim("--event onToolResult")}`,
+      `  ${dim("flags")}  ${dim("--dir <path>")} ${dim("run in another folder")}  ${dim("·")} ${dim("--scope")}`,
       "",
       `  ${dim("docs")}   ${cyan("https://docs.agentreflex.dev")}`,
       "",
@@ -372,7 +479,7 @@ async function main(): Promise<void> {
     case "new":
       return pos[0] ? void cmdNew(pos[0], cwd) : help();
     case "dev":
-      return pos.length ? cmdDev(pos.join(" "), cwd) : help();
+      return cmdDev(opts, pos, cwd);
     case "--version":
     case "-v":
       return void console.log(VERSION);

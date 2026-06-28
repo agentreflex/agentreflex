@@ -64,8 +64,25 @@ export default defineReflex({
 
 ## Test it
 
+`arx dev` simulates a tool call against your reflexes and prints the verdict, so you can iterate without re-triggering the agent.
+
 ```bash
-arx dev "git push --force origin main"
+arx dev "git push --force origin main"        # a Bash command (the default tool)
 ```
 
-`dev` runs your reflexes against a command and prints the verdict, so you can iterate without re-triggering the agent. See the full types in the [spec](/docs/reference/spec).
+Reflexes that key on files — not just shell commands — take `--tool` and `--paths`:
+
+```bash
+arx dev --tool Read  --paths .env             # simulate the agent reading .env
+arx dev --tool Write --paths src/app.ts,.env  # multiple paths, comma-separated
+```
+
+Other flags:
+
+- `--agent <name>` — pretend a specific agent is calling (default `claude`).
+- `--event onToolResult` — run the post-tool side effect instead of the pre-tool check.
+- `--file ./path/to/reflex.mjs` — test one reflex file directly, ignoring `.reflex/config.json`.
+
+By default `dev` runs the reflexes wired in `.reflex/`. See the full types in the [spec](/docs/reference/spec).
+
+> Authoring an **official** reflex in the monorepo? Use `--reflex <name>` to test it straight from `reflexes/<name>` — see [Contributing](/docs/contributing).

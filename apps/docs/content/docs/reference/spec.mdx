@@ -73,3 +73,5 @@ A distributable reflex ships a manifest describing itself for the catalog:
 ## The agent hook
 
 Each wired agent calls `arx hook --agent <name>` before a tool runs. The dispatcher reads the agent's native payload on stdin, normalizes it to a `ToolCallContext`, runs your reflexes, and writes the decision back in that agent's native response format — exit code, stderr, or JSON, depending on the agent. Per-agent translation lives in the adapters, so a reflex never has to know which agent it's running under.
+
+This is the machine path — silent and fail-open by design. **To test a reflex, don't invoke `hook` by hand; use [`arx dev`](/docs/reference/cli#dev)**, which simulates a tool call and prints a readable verdict.
