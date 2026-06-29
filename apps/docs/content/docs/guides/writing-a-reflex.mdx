@@ -56,14 +56,14 @@ A reflex can accept options so the same logic works with different settings. Who
 ```json title=".reflex/config.json"
 {
   "reflexes": [
-    { "source": "./scope-check.mjs", "with": { "allow": ["src/**"] } }
+    { "source": "./my-reflex.mjs", "with": { "allow": ["src/**"] } }
   ]
 }
 ```
 
 ```ts
 export default defineReflex({
-  name: "scope-check",
+  name: "my-reflex",
   onToolCall(ctx) {
     const allow = (ctx.options?.allow as string[]) ?? [];
     // ...use allow
@@ -75,7 +75,7 @@ export default defineReflex({
 Declare the options your reflex accepts in `reflex.json` under `options`, so they're documented and validated. Test a configured reflex with `arx dev --with`:
 
 ```bash
-arx dev --reflex scope-check --tool Edit --paths src/app.ts --with '{"allow":["src/**"]}'
+arx dev --reflex my-reflex --tool Edit --paths src/app.ts --with '{"allow":["src/**"]}'
 ```
 
 > Options go under the entry's `with` block. A top-level key in `config.json` is not read.

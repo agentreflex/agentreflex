@@ -69,7 +69,7 @@ A reflex can take options. The `.reflex/config.json` entry becomes an object wit
 ```json
 {
   "reflexes": [
-    { "source": "./scope-check.mjs", "with": { "allow": ["src/**"], "objective": "..." } }
+    { "source": "./my-reflex.mjs", "with": { "allow": ["src/**"] } }
   ]
 }
 ```
@@ -85,7 +85,7 @@ Declare accepted options in `reflex.json` under `options`. Test a configured ref
 without touching `config.json`:
 
 ```bash
-pnpm reflex:dev scope-check --tool Edit --paths src/x.ts --with '{"allow":["src/**"]}'
+pnpm reflex:dev my-reflex --tool Edit --paths src/x.ts --with '{"allow":["src/**"]}'
 ```
 
 **Note:** options go under `with`. A *top-level* key like `{ "my-reflex": { ... } }`

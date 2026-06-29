@@ -13,6 +13,7 @@
     "reflex:new": "node scripts/new-reflex.mjs",
     "reflex:dev": "node scripts/dev-reflex.mjs",
     "reflex:check": "node scripts/check-reflexes.mjs",
+    "smoke:hook": "node scripts/smoke-hook.mjs",
     "dev": "pnpm -r dev",
     "test": "vitest run",
     "typecheck": "pnpm -r typecheck",

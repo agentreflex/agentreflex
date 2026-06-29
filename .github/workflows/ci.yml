@@ -7,7 +7,11 @@ on:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -17,6 +21,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm biome ci .
+        if: runner.os == 'Linux' # formatting is OS-independent; lint once
       - run: pnpm -r --filter "./packages/*" --filter "./reflexes/*" build
       - run: pnpm -r run --if-present typecheck
       - run: pnpm test
+      - run: node scripts/smoke-hook.mjs # the dispatcher must work on every OS

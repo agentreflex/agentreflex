@@ -6,7 +6,6 @@ import { pathToFileURL } from "node:url";
 import { ADAPTERS, getAdapter, resolveAdapters } from "@agentreflex/adapters";
 import { runToolCall, runToolResult } from "@agentreflex/core";
 import type { AgentName, Reflex, Scope } from "@agentreflex/core";
-import * as p from "@clack/prompts";
 import {
   type Config,
   configPath,
@@ -188,6 +187,9 @@ async function cmdDoctor(cwd: string): Promise<void> {
 
 // ── init: the interactive flow ──
 async function cmdInit(cwd: string): Promise<void> {
+  // Loaded lazily: prompts are only needed here, so the hot paths (hook, dev,
+  // doctor) never load this dep — smaller, faster, fewer ways to fail at startup.
+  const p = await import("@clack/prompts");
   console.log(banner(VERSION));
   p.intro(lime("let's give your agents reflexes"));
 

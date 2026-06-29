@@ -8,8 +8,11 @@ describe("recover reflex", () => {
   it("snapshots a file before an edit and never blocks", () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), "ar-home-"));
     const proj = fs.mkdtempSync(path.join(os.tmpdir(), "ar-proj-"));
+    // os.homedir() reads $HOME on POSIX and %USERPROFILE% on Windows — set both.
     const prevHome = process.env.HOME;
-    process.env.HOME = home; // os.homedir() honors $HOME on POSIX
+    const prevProfile = process.env.USERPROFILE;
+    process.env.HOME = home;
+    process.env.USERPROFILE = home;
     try {
       const file = path.join(proj, "a.txt");
       fs.writeFileSync(file, "v1");
@@ -34,6 +37,9 @@ describe("recover reflex", () => {
       // biome-ignore lint/performance/noDelete: unsetting an env var needs delete
       if (prevHome === undefined) delete process.env.HOME;
       else process.env.HOME = prevHome;
+      // biome-ignore lint/performance/noDelete: unsetting an env var needs delete
+      if (prevProfile === undefined) delete process.env.USERPROFILE;
+      else process.env.USERPROFILE = prevProfile;
       fs.rmSync(home, { recursive: true, force: true });
       fs.rmSync(proj, { recursive: true, force: true });
     }
