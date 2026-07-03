@@ -115,6 +115,12 @@ Single-purpose · shell-aware (`parseCommand`) · an accurate `reflex.json` (dec
 the decisions and context fields the code actually uses) · a test proving both the catch
 and the non-catch. Then `pnpm reflex:check` must be green.
 
+Use core's helpers instead of hand-rolling: `parseCommand`/`commandMatches` for shell
+commands, `pathMatchesGlob(filePath, globs, cwd)` for path globs (`**`/`*`/`?`,
+outside-cwd paths never match). Hand-rolled matchers drift and carry subtle escaping
+bugs. Validate option shapes before use (e.g. `Array.isArray`) — a reflex that throws
+is skipped for that call.
+
 ## Verify
 
 ```bash

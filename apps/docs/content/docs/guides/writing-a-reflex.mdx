@@ -33,6 +33,8 @@ export default {
 
 For autocomplete and type-checking, author in TypeScript against `@agentreflex/core` and compile to `.mjs`. The helpers (`deny`, `ask`, `pass`) build the decisions for you, and `parseCommand` splits compound commands so `cd x && git push --force` can't slip past a check.
 
+For path-based checks, `pathMatchesGlob(filePath, globs, cwd)` matches a path against glob patterns (`**` crosses directories, `*` stays within a segment, `?` is one character) — and a path that resolves outside `cwd` never matches, so an allow-list can't be escaped with `../`. Use it instead of hand-rolling glob-to-regex conversion.
+
 ```ts
 import { defineReflex, deny, pass, parseCommand } from "@agentreflex/core";
 

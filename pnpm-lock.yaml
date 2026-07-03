@@ -160,6 +160,9 @@ importers:
         specifier: ^1.8.2
         version: 1.8.4
     devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.0
       '@types/shell-quote':
         specifier: ^1.7.5
         version: 1.7.5
