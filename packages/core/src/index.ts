@@ -8,4 +8,5 @@
  */
 export * from "./types.js";
 export * from "./command.js";
+export * from "./paths.js";
 export * from "./run.js";

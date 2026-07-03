@@ -63,7 +63,7 @@
         "reads": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "enum": ["command", "paths", "cwd", "raw"] },
+          "items": { "enum": ["command", "paths", "cwd", "raw", "options"] },
           "description": "Context fields this reflex inspects."
         },
         "writes": {

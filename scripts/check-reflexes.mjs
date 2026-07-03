@@ -17,7 +17,7 @@ const reflexesDir = path.join(repo, "reflexes");
 
 const EVENTS = new Set(["onToolCall", "onToolResult"]);
 const DECISIONS = new Set(["pass", "deny", "ask", "modify"]);
-const READS = new Set(["command", "paths", "cwd", "raw"]);
+const READS = new Set(["command", "paths", "cwd", "raw", "options"]);
 
 const only = process.argv[2];
 const names = fs

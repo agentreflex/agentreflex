@@ -66,6 +66,20 @@ describe("runToolCall", () => {
       reason: "confirm?",
     });
   });
+
+  it("isolates a throwing reflex — the rest of the chain still runs", async () => {
+    const broken: Reflex = {
+      name: "broken",
+      onToolCall: () => {
+        throw new TypeError("bad config");
+      },
+    };
+    expect(await runToolCall([broken, blocker], ctx("git push --force"))).toEqual({
+      action: "deny",
+      reason: "no force",
+    });
+    expect(await runToolCall([broken], ctx("ls"))).toEqual({ action: "pass" });
+  });
 });
 
 describe("configurable reflex (ctx.options)", () => {
