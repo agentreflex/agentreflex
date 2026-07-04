@@ -14,6 +14,10 @@ The open commons of reflexes for AI coding agents — write an instinct once, an
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT"></a>
 </p>
 
+<p align="center">
+  <img src="assets/demo.gif" alt="One reflex deflecting a force-push in Claude Code and a secrets read in OpenCode, then the arx doctor capability matrix" width="100%">
+</p>
+
 ---
 
 Coding agents — Claude Code, Cursor, Gemini CLI, Copilot CLI, Windsurf, OpenCode — each
