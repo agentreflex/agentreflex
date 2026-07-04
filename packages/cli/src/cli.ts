@@ -242,7 +242,7 @@ const STARTER = `export default {
   name: "no-force-push",
   onToolCall(ctx) {
     if (ctx.tool === "Bash" && /git\\s+push\\b.*--force\\b/.test(ctx.command ?? ""))
-      return { action: "deny", reason: "we agreed: no force-push — open a PR instead" };
+      return { action: "deny", reason: "no rewriting main history (any --force variant) — open a PR instead" };
     return { action: "pass" };
   },
 };
