@@ -1,26 +1,10 @@
 import path from "node:path";
-import { type Decision, type ToolCallContext, defineReflex, pass } from "@agentreflex/core";
+import { type Decision, type ToolCallContext, defineReflex, pass, pathMatchesGlob } from "@agentreflex/core";
 
 const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 
 export interface ScopeCheckOptions {
   allow?: string | string[];
-}
-
-function matchesGlob(filePath: string, pattern: string, cwd: string): boolean {
-  const abs = path.isAbsolute(filePath) ? filePath : path.join(cwd, filePath);
-  const rel = path.relative(cwd, abs).replace(/\\/g, "/");
-  const escaped = pattern
-    .replace(/\\/g, "/")
-    .replace(/[.+^${}()|[\]]/g, "\\$&")
-    .replace(/\*\*/g, "DOUBLE_STAR")
-    .replace(/\*/g, "[^/]*")
-    .replace(/DOUBLE_STAR/g, ".*");
-  return new RegExp(`^${escaped}$`).test(rel);
-}
-
-function isAllowed(filePath: string, patterns: string[], cwd: string): boolean {
-  return patterns.some((p) => matchesGlob(filePath, p, cwd));
 }
 
 export default defineReflex({
@@ -52,7 +36,7 @@ export default defineReflex({
     }
 
     for (const filePath of ctx.paths) {
-      if (!isAllowed(filePath, allow, ctx.cwd)) {
+      if (!pathMatchesGlob(filePath, allow, ctx.cwd)) {
         return {
           action: "deny",
           reason: `scope-check: "${filePath}" is outside the allowed scope (${allow.join(", ")}). Update the \`allow\` list in .reflex/config.json to expand the scope, or confirm this is intentional with the user.`,
