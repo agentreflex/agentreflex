@@ -1,5 +1,11 @@
 import path from "node:path";
-import { type Decision, type ToolCallContext, defineReflex, pass, pathMatchesGlob } from "@agentreflex/core";
+import {
+  type Decision,
+  type ToolCallContext,
+  defineReflex,
+  pass,
+  pathMatchesGlob,
+} from "@agentreflex/core";
 
 const WRITE_TOOLS = new Set(["Write", "Edit", "MultiEdit"]);
 
