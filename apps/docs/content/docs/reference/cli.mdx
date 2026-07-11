@@ -32,7 +32,7 @@ arx add ./no-force-push.mjs
 A spec that resolves to a `pack.json` (a folder containing one, a URL to one, or a registry name listed under `packs`) installs as a [pack](/docs/concepts/packs): its files are staged into `.reflex/packs/<name>/`, you're prompted once for any secret it references (stored user-private, reused on reinstall), and its MCP servers / skills / session hooks / reflexes are wired into every agent that can carry them.
 
 ```bash
-arx add memcell                          # registry name → the product's own repo
+arx add acme                             # registry name → the product's own repo
 arx add github:acme/acme/packs/acme      # straight from a repo
 arx add ./packs/acme                     # local folder (authoring loop)
 ```
@@ -40,7 +40,7 @@ arx add ./packs/acme                     # local folder (authoring loop)
 Pack options (like a self-hosted endpoint) can be overridden with `--set`:
 
 ```bash
-arx add memcell --set memcell_url=http://localhost:8000/mcp
+arx add acme --set acme_url=http://localhost:8000/mcp
 ```
 
 ## `remove`
@@ -48,7 +48,7 @@ arx add memcell --set memcell_url=http://localhost:8000/mcp
 Remove an installed pack: agent wiring, staged files, `config.json` entries, and its stored secrets.
 
 ```bash
-arx remove memcell
+arx remove acme
 ```
 
 ## `new`

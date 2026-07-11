@@ -103,9 +103,9 @@ A **pack** bundles everything a real product needs to land in your agents — MC
 installed by one command and removed as cleanly:
 
 ```bash
-arx add memcell            # prompts once for the token, wires every capable agent
+arx add <pack>             # prompts once for its token, wires every capable agent
 arx doctor                 # real MCP handshake per server, actionable verdicts
-arx remove memcell         # wiring, files, and stored secrets — gone
+arx remove <pack>          # wiring, files, and stored secrets — gone
 ```
 
 Packs live in *their product's* repo and are fetched from there; the registry only

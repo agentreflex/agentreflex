@@ -16,7 +16,7 @@ One `arx add`, and all of it is wired into your agents. One `arx remove`, and al
 ```bash
 arx add github:acme/product/pack        # from a product's own repo
 arx add ./packs/my-pack                 # from a local folder
-arx add memcell                         # by name, from the registry
+arx add acme                            # by name, from the registry
 ```
 
 ## Neutral by design
@@ -29,26 +29,26 @@ A pack is a folder with a `pack.json`:
 
 ```json pack.json
 {
-  "name": "memcell",
+  "name": "acme",
   "version": "0.1.0",
-  "category": "memory",
+  "category": "search",
   "secrets": {
-    "memcell_token": {
-      "title": "MemCell token",
-      "description": "memcell.ai → Settings → Connect"
+    "acme_token": {
+      "title": "Acme API token",
+      "description": "acme.dev → Settings → Tokens"
     }
   },
   "options": {
-    "memcell_url": { "title": "MCP endpoint", "default": "https://api.memcell.ai/mcp" }
+    "acme_url": { "title": "MCP endpoint", "default": "https://api.acme.dev/mcp" }
   },
   "mcp": {
-    "memcell": {
+    "acme": {
       "type": "http",
-      "url": "${options.memcell_url}",
-      "headers": { "Authorization": "Bearer ${secrets.memcell_token}" }
+      "url": "${options.acme_url}",
+      "headers": { "Authorization": "Bearer ${secrets.acme_token}" }
     }
   },
-  "skills": [{ "name": "memcell-memory", "source": "skills/memcell-memory" }],
+  "skills": [{ "name": "acme-usage", "source": "skills/acme-usage" }],
   "hooks": [{ "event": "SessionStart", "run": "hooks/session-context.mjs" }]
 }
 ```
@@ -76,8 +76,8 @@ Adapters carry pack capabilities the same way they carry decisions: each declare
 `arx doctor` probes every installed pack's MCP servers with a real JSON-RPC `initialize` — the same handshake your agent performs — and reports an honest verdict with the fix:
 
 ```
-● pack memcell/memcell  connected
-● pack memcell/memcell  unauthorized   token rejected (401) — re-run arx add to update it
-● pack memcell/memcell  host-rejected  server rejected the Host header (421) — its allowed-hosts list is missing this hostname:port
-● pack memcell/memcell  unreachable    no response — is the server up?
+● pack acme/acme  connected
+● pack acme/acme  unauthorized   token rejected (401) — re-run arx add to update it
+● pack acme/acme  host-rejected  server rejected the Host header (421) — its allowed-hosts list is missing this hostname:port
+● pack acme/acme  unreachable    no response — is the server up?
 ```
