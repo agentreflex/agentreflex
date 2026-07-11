@@ -37,6 +37,12 @@ arx add github:acme/acme/packs/acme      # straight from a repo
 arx add ./packs/acme                     # local folder (authoring loop)
 ```
 
+Pack options (like a self-hosted endpoint) can be overridden with `--set`:
+
+```bash
+arx add memcell --set memcell_url=http://localhost:8000/mcp
+```
+
 ## `remove`
 
 Remove an installed pack: agent wiring, staged files, `config.json` entries, and its stored secrets.
@@ -108,6 +114,7 @@ arx dev --event onToolResult --tool Write --paths a.ts # a post-tool side effect
 | `--scope <project\|global>` | install, uninstall | Wire the project or your whole machine. |
 | `--global` | install, uninstall | Shorthand for `--scope global`. |
 | `--registry <url>` | add | Resolve names against a different catalog. |
+| `--set <opt=value,...>` | add (packs) | Override a pack's declared options (e.g. a self-hosted endpoint). |
 
 <Callout type="warn">
 `arx hook --agent <name>` is the **machine-facing dispatcher** each wired agent calls with a payload on stdin — not a test tool. Piping JSON into it by hand usually does nothing: a `pass` is silent, a `deny` prints raw JSON meant for the agent, and without the agent's `cwd` it loads no reflexes. To test a reflex yourself, use **`arx dev`**.

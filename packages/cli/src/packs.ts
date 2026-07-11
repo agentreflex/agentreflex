@@ -129,10 +129,13 @@ async function fetchText(url: string): Promise<string> {
 
 /** Gather secret/option values: stored secrets are reused; missing REFERENCED
  *  secrets are prompted for (TTY) or fail with a clear message (non-TTY). */
-export async function gatherValues(manifest: PackManifest): Promise<PackValues> {
+export async function gatherValues(
+  manifest: PackManifest,
+  optionOverrides: Record<string, string> = {},
+): Promise<PackValues> {
   const values: PackValues = { secrets: {}, options: {} };
   for (const [name, decl] of Object.entries(manifest.options ?? {}))
-    values.options[name] = decl.default ?? "";
+    values.options[name] = optionOverrides[name] ?? decl.default ?? "";
 
   const needed = referencedSecrets(manifest);
   const stored = readSecrets()[manifest.name] ?? {};

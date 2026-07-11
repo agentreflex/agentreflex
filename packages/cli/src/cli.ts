@@ -41,6 +41,7 @@ const VALUE_FLAGS = new Set([
   "--reflex",
   "--file",
   "--with",
+  "--set",
 ]);
 
 function parseArgs(rest: string[]): { opts: Opts; pos: string[] } {
@@ -294,9 +295,20 @@ function githubRaw(spec: string): string {
 /** Install a pack: stage files, gather secrets/options, apply to every
  *  targeted agent, register in config. The composite counterpart of a
  *  single-reflex add. */
-async function cmdAddPack(spec: string, cwd: string): Promise<void> {
+/** Parse repeated `--set key=value` (comma-separated) option overrides. */
+function optionOverrides(opts: Opts): Record<string, string> {
+  if (typeof opts.set !== "string" || !opts.set) return {};
+  const out: Record<string, string> = {};
+  for (const pair of opts.set.split(",")) {
+    const eq = pair.indexOf("=");
+    if (eq > 0) out[pair.slice(0, eq).trim()] = pair.slice(eq + 1).trim();
+  }
+  return out;
+}
+
+async function cmdAddPack(spec: string, cwd: string, opts: Opts): Promise<void> {
   const { manifest, dir } = await stagePack(spec, cwd);
-  const values = await gatherValues(manifest);
+  const values = await gatherValues(manifest, optionOverrides(opts));
   const results = applyPack(manifest, dir, cwd, values);
   registerPack(
     cwd,
@@ -327,7 +339,7 @@ async function cmdAdd(spec: string, cwd: string, opts: Opts): Promise<void> {
   if (looksLikePack(spec, cwd) || opts.pack) {
     console.log(head("add · pack"));
     try {
-      await cmdAddPack(spec, cwd);
+      await cmdAddPack(spec, cwd, opts);
     } catch (err) {
       console.log(`  ${dim(`could not add pack '${spec}': ${(err as Error).message}`)}\n`);
     }
@@ -365,7 +377,7 @@ async function cmdAdd(spec: string, cwd: string, opts: Opts): Promise<void> {
       const pack = catalog.packs?.find((r) => r.name === spec);
       if (pack) {
         console.log(head("add · pack"));
-        await cmdAddPack(resolveSibling(index, pack.pack), cwd);
+        await cmdAddPack(resolveSibling(index, pack.pack), cwd, opts);
         return;
       }
       const found = catalog.reflexes?.find((r) => r.name === spec);
@@ -552,7 +564,7 @@ function help(): void {
       "",
       `  ${dim("dev")}    ${dim('arx dev "git push --force"')}  ${dim("·")} ${dim("--tool Read --paths .env")}`,
       `         ${dim("--reflex <name>")} ${dim("·")} ${dim("--file ./r.mjs")} ${dim("·")} ${dim("--with '{json}'")} ${dim("·")} ${dim("--agent")} ${dim("·")} ${dim("--event onToolResult")}`,
-      `  ${dim("flags")}  ${dim("--dir <path>")} ${dim("run in another folder")}  ${dim("·")} ${dim("--scope")}`,
+      `  ${dim("flags")}  ${dim("--dir <path>")} ${dim("run in another folder")}  ${dim("·")} ${dim("--scope")}  ${dim("·")} ${dim("--set opt=value (packs)")}`,
       "",
       `  ${dim("docs")}   ${cyan("https://docs.agentreflex.dev")}`,
       "",
