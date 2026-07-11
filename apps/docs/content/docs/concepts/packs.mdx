@@ -7,7 +7,7 @@ A reflex is one guardrail. A **pack** is everything a real capability needs to l
 
 - **MCP servers** — remote tools the agent can call (HTTP, with auth)
 - **skills** — instructions the agent auto-discovers (`SKILL.md`)
-- **session hooks** — scripts that run at session boundaries (`SessionStart`)
+- **session hooks** — scripts that run at lifecycle moments: `SessionStart` (once, as a session opens) and `UserPromptSubmit` (every prompt, before the model sees it)
 - **reflexes** — guardrails, same as ever
 - **secrets & options** — the token and endpoint the above are configured with
 

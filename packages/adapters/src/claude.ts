@@ -132,7 +132,7 @@ const claudePack = {
   },
 
   lifecycleHook(
-    event: "SessionStart",
+    event: "SessionStart" | "UserPromptSubmit",
     script: string,
     timeout: number | undefined,
     projectDir: string,
@@ -152,7 +152,11 @@ const claudePack = {
     return { file, changed: !already };
   },
 
-  removeLifecycleHook(event: "SessionStart", script: string, projectDir: string): PackWriteResult {
+  removeLifecycleHook(
+    event: "SessionStart" | "UserPromptSubmit",
+    script: string,
+    projectDir: string,
+  ): PackWriteResult {
     const file = localSettingsFile(projectDir);
     if (!fs.existsSync(file)) return { file, changed: false };
     const settings = readJson<Settings>(file);

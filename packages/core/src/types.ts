@@ -115,12 +115,16 @@ export interface PackWriter {
   removeSkill?(name: string, projectDir: string): PackWriteResult;
   /** Wire a session-lifecycle hook script (absolute path, run with node). */
   lifecycleHook?(
-    event: "SessionStart",
+    event: "SessionStart" | "UserPromptSubmit",
     script: string,
     timeout: number | undefined,
     projectDir: string,
   ): PackWriteResult;
-  removeLifecycleHook?(event: "SessionStart", script: string, projectDir: string): PackWriteResult;
+  removeLifecycleHook?(
+    event: "SessionStart" | "UserPromptSubmit",
+    script: string,
+    projectDir: string,
+  ): PackWriteResult;
 }
 
 /** Maps one agent's native hook dialect to and from the canonical model. */

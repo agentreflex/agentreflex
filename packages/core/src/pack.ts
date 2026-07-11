@@ -46,10 +46,15 @@ export interface PackSkill {
   source: string;
 }
 
-/** A lifecycle hook: a script the agent runs at a session boundary.
+/** The session-lifecycle moments a pack can hook. `SessionStart` runs once as
+ *  a session opens (context seeding); `UserPromptSubmit` runs on every prompt
+ *  before the model sees it (deterministic per-prompt work, e.g. recall). */
+export type PackHookEvent = "SessionStart" | "UserPromptSubmit";
+
+/** A lifecycle hook: a script the agent runs at a lifecycle moment.
  *  `run` is a JS file relative to the pack root, executed with node. */
 export interface PackLifecycleHook {
-  event: "SessionStart";
+  event: PackHookEvent;
   run: string;
   /** Seconds before the agent gives up on the hook. */
   timeout?: number;
@@ -142,8 +147,10 @@ export function parsePackManifest(json: string): PackManifest {
       throw new Error(`skill '${s.name}': source must stay inside the pack`);
   }
   for (const h of m.hooks ?? []) {
-    if (h.event !== "SessionStart")
-      throw new Error(`hook event '${String(h.event)}' is not supported (SessionStart only)`);
+    if (h.event !== "SessionStart" && h.event !== "UserPromptSubmit")
+      throw new Error(
+        `hook event '${String(h.event)}' is not supported (SessionStart | UserPromptSubmit)`,
+      );
     if (!h.run || h.run.includes("..")) throw new Error("every hook needs a `run` inside the pack");
   }
   for (const r of m.reflexes ?? []) {

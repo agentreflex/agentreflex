@@ -107,7 +107,7 @@ A [pack](/docs/concepts/packs) bundles capabilities — MCP servers, skills, ses
 }
 ```
 
-Rules: `name` is kebab-case; every `source`/`run` resolves inside the pack (no `..`); `${secrets.x}` / `${options.x}` references are interpolated at install time and unresolved references throw; hook events are `SessionStart`. Adapters carry pack capabilities through the optional `Adapter.pack` writer set (`mcp` / `skill` / `lifecycleHook` + removals) — an adapter without a writer skips that capability, reported, never fatal.
+Rules: `name` is kebab-case; every `source`/`run` resolves inside the pack (no `..`); `${secrets.x}` / `${options.x}` references are interpolated at install time and unresolved references throw; hook events are `SessionStart` and `UserPromptSubmit`. Adapters carry pack capabilities through the optional `Adapter.pack` writer set (`mcp` / `skill` / `lifecycleHook` + removals) — an adapter without a writer skips that capability, reported, never fatal.
 
 ## Configuration
 

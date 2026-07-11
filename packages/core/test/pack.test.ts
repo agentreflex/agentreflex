@@ -38,7 +38,7 @@ describe("parsePackManifest", () => {
       parsePackManifest(
         JSON.stringify({ name: "x", hooks: [{ event: "PreCompact", run: "h.mjs" }] }),
       ),
-    ).toThrow(/SessionStart only/);
+    ).toThrow(/SessionStart \| UserPromptSubmit/);
     expect(() =>
       parsePackManifest(JSON.stringify({ name: "x", mcp: { s: { type: "stdio", url: "u" } } })),
     ).toThrow(/only type "http"/);
