@@ -104,6 +104,7 @@ in `config.json` is NOT read.
 ```
 reflexes/<name>/   # one reflex: src/index.ts · reflex.json · test/ · README.md
 packages/core/     # @agentreflex/core — the contract (types, defineReflex, parseCommand)
+                   #   + the pack model (pack.json parse/validate, secret interpolation)
 packages/adapters/ # per-agent hook adapters
 packages/cli/      # the arx / agentreflex CLI
 scripts/           # reflex:new, reflex:dev, reflex:check, build-registry

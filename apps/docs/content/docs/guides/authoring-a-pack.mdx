@@ -1,0 +1,89 @@
+---
+title: Authoring a pack
+description: Ship your product into every agent — a pack.json in your own repo, tested locally with arx add, listed in the registry when it's ready.
+---
+
+You're building a product agents should use — a memory service, a search API, an internal platform. A pack is how it installs: your MCP server, your skill, your session hook, and the token they need, wired by one `arx add`.
+
+The pack lives in **your repository**. agentreflex fetches it from there; you version it with your product.
+
+## 1. Lay out the pack
+
+```
+packs/acme/
+├── pack.json
+├── skills/
+│   └── acme-usage/
+│       └── SKILL.md
+└── hooks/
+    └── session-context.mjs
+```
+
+```json packs/acme/pack.json
+{
+  "name": "acme",
+  "version": "0.1.0",
+  "description": "Acme's tools, instructions, and session context.",
+  "homepage": "https://acme.dev",
+  "category": "search",
+  "secrets": {
+    "acme_token": { "title": "Acme API token", "description": "acme.dev → Settings → Tokens" }
+  },
+  "options": {
+    "acme_url": { "title": "MCP endpoint", "default": "https://api.acme.dev/mcp" }
+  },
+  "mcp": {
+    "acme": {
+      "type": "http",
+      "url": "${options.acme_url}",
+      "headers": { "Authorization": "Bearer ${secrets.acme_token}" }
+    }
+  },
+  "skills": [{ "name": "acme-usage", "source": "skills/acme-usage" }],
+  "hooks": [{ "event": "SessionStart", "run": "hooks/session-context.mjs", "timeout": 15 }]
+}
+```
+
+Rules the parser holds you to: kebab-case `name`; `mcp` servers are `type: "http"`; every `source`/`run` stays inside the pack (no `..`); hook events are `SessionStart` (more as agents grow them).
+
+Declare a secret for anything private, an option for anything a user might point elsewhere (like a self-hosted endpoint). Reference them as `${secrets.x}` / `${options.x}` in `mcp` url/headers — install interpolates them and fails loudly on anything unresolved.
+
+## 2. Test the loop locally
+
+From any scratch project:
+
+```bash
+arx add /path/to/your-repo/packs/acme   # prompts for the token, wires your agents
+arx doctor                              # real MCP initialize against your server
+arx remove acme                         # everything undone, secrets included
+```
+
+`doctor`'s verdicts are the agent's reality — `unauthorized` means your token path is broken for real users too; `host-rejected` means your server's allowed-hosts config would reject real agents. Fix them in the product, not the pack.
+
+## 3. Distribute
+
+Anyone can install straight from your repo — this works the day you merge:
+
+```bash
+arx add github:acme/acme/packs/acme
+```
+
+To be installable by name, add your pack to the registry ([awesome-reflexes](https://github.com/agentreflex/awesome-reflexes)) with a `packs` entry pointing at your repo:
+
+```json
+{
+  "packs": [
+    {
+      "name": "acme",
+      "category": "search",
+      "pack": "https://raw.githubusercontent.com/acme/acme/HEAD/packs/acme/pack.json"
+    }
+  ]
+}
+```
+
+The registry is a pointer, not a copy — users always fetch from your repo, and your releases are the update channel.
+
+## What lands where
+
+Install stages your files into the project's `.reflex/packs/<name>/` and wires each agent that supports each capability. Secrets go to the user's private store (`~/.agentreflex/secrets.json`, `0600`), never into the project. See [Packs](/docs/concepts/packs) for the per-agent destination table.

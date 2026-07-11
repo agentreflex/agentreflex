@@ -30,15 +30,21 @@ export default defineReflex({
 })
 ```
 
+Beyond single reflexes, `arx add` installs **packs** — a product's MCP server (with
+auth), skills, session hooks, and reflexes as one unit, secrets prompted once and kept
+user-private. `arx doctor` verifies each pack's MCP server with a real handshake;
+`arx remove` undoes everything.
+
 ## Commands
 
 | | |
 |---|---|
 | `arx init` | scaffold `.reflex/` and wire your installed agents |
-| `arx add <name \| ./path \| github: \| url>` | add a reflex from the catalog or anywhere |
+| `arx add <name \| ./path \| github: \| url>` | add a reflex or a pack, from the registry or anywhere |
+| `arx remove <pack>` | remove a pack — wiring, files, and stored secrets |
 | `arx new <name>` | scaffold a new reflex |
 | `arx install` / `arx uninstall` | wire / unwire the dispatcher |
-| `arx doctor` | capability matrix for your agents |
+| `arx doctor` | capability matrix + live MCP checks for installed packs |
 | `arx dev "<cmd>"` | test a command against your reflexes |
 
 ## Links

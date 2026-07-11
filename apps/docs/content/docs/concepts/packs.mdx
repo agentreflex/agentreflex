@@ -1,0 +1,83 @@
+---
+title: Packs
+description: A pack bundles everything a real capability needs — MCP servers, skills, session hooks, reflexes, and the secrets they're configured with — into one installable unit.
+---
+
+A reflex is one guardrail. A **pack** is everything a real capability needs to land in an agent:
+
+- **MCP servers** — remote tools the agent can call (HTTP, with auth)
+- **skills** — instructions the agent auto-discovers (`SKILL.md`)
+- **session hooks** — scripts that run at session boundaries (`SessionStart`)
+- **reflexes** — guardrails, same as ever
+- **secrets & options** — the token and endpoint the above are configured with
+
+One `arx add`, and all of it is wired into your agents. One `arx remove`, and all of it — wiring, files, stored secrets — is gone.
+
+```bash
+arx add github:acme/product/pack        # from a product's own repo
+arx add ./packs/my-pack                 # from a local folder
+arx add memcell                         # by name, from the registry
+```
+
+## Neutral by design
+
+agentreflex doesn't ship products; it installs them. Packs live in **their product's repository** and are fetched from there — by path, URL, `github:` shorthand, or a registry entry that points at the same place. No pack is privileged, including the ones listed in the registry.
+
+## The manifest
+
+A pack is a folder with a `pack.json`:
+
+```json pack.json
+{
+  "name": "memcell",
+  "version": "0.1.0",
+  "category": "memory",
+  "secrets": {
+    "memcell_token": {
+      "title": "MemCell token",
+      "description": "memcell.ai → Settings → Connect"
+    }
+  },
+  "options": {
+    "memcell_url": { "title": "MCP endpoint", "default": "https://api.memcell.ai/mcp" }
+  },
+  "mcp": {
+    "memcell": {
+      "type": "http",
+      "url": "${options.memcell_url}",
+      "headers": { "Authorization": "Bearer ${secrets.memcell_token}" }
+    }
+  },
+  "skills": [{ "name": "memcell-memory", "source": "skills/memcell-memory" }],
+  "hooks": [{ "event": "SessionStart", "run": "hooks/session-context.mjs" }]
+}
+```
+
+`${secrets.*}` and `${options.*}` are interpolated at install time. An unresolvable reference fails the install loudly — a config with a literal `${...}` in it is never written.
+
+## Secrets never touch your project
+
+At install, `arx` prompts once for each secret the manifest actually references, then keeps it in `~/.agentreflex/secrets.json` (`0600`, user-private). Everything written into an agent lands in **user-private files** — never in something you might commit:
+
+| Capability | Claude Code destination |
+| --- | --- |
+| MCP server | `~/.claude.json`, under this project's entry (local scope — the same place `claude mcp add --scope local` writes) |
+| Skill | `.claude/skills/<name>/` |
+| Session hook | `.claude/settings.local.json` (gitignored by Claude Code) |
+
+Reinstalling reuses stored secrets without asking again. `arx remove <pack>` deletes them along with the wiring.
+
+## Graceful degradation
+
+Adapters carry pack capabilities the same way they carry decisions: each declares what it supports, and install applies what it can, per capability, per agent. An agent that can't carry a skill still gets the MCP server; the install report says exactly what landed where and what was skipped. Nothing is silently dropped.
+
+## Verify with doctor
+
+`arx doctor` probes every installed pack's MCP servers with a real JSON-RPC `initialize` — the same handshake your agent performs — and reports an honest verdict with the fix:
+
+```
+● pack memcell/memcell  connected
+● pack memcell/memcell  unauthorized   token rejected (401) — re-run arx add to update it
+● pack memcell/memcell  host-rejected  server rejected the Host header (421) — its allowed-hosts list is missing this hostname:port
+● pack memcell/memcell  unreachable    no response — is the server up?
+```

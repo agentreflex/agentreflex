@@ -1,6 +1,6 @@
 ---
 title: CLI Reference
-description: Every agentreflex command — init, add, new, install, uninstall, doctor, and dev.
+description: Every agentreflex command — init, add, remove, new, install, uninstall, doctor, and dev.
 ---
 
 The CLI is `agentreflex`, aliased to `arx`. Both names work.
@@ -20,13 +20,29 @@ npx agentreflex init
 
 ## `add`
 
-Add a reflex from the commons (by name), a GitHub path, a URL, or a local file. Writes it into `.reflex/` and records it in `config.json`.
+Add a **reflex** or a **pack** — from the registry (by name), a GitHub path, a URL, or a local path. Reflexes are written into `.reflex/` and recorded in `config.json`.
 
 ```bash
 arx add no-force-push
 arx add github:you/reflexes/no-secrets.mjs
 arx add https://example.com/no-secrets.mjs
 arx add ./no-force-push.mjs
+```
+
+A spec that resolves to a `pack.json` (a folder containing one, a URL to one, or a registry name listed under `packs`) installs as a [pack](/docs/concepts/packs): its files are staged into `.reflex/packs/<name>/`, you're prompted once for any secret it references (stored user-private, reused on reinstall), and its MCP servers / skills / session hooks / reflexes are wired into every agent that can carry them.
+
+```bash
+arx add memcell                          # registry name → the product's own repo
+arx add github:acme/acme/packs/acme      # straight from a repo
+arx add ./packs/acme                     # local folder (authoring loop)
+```
+
+## `remove`
+
+Remove an installed pack: agent wiring, staged files, `config.json` entries, and its stored secrets.
+
+```bash
+arx remove memcell
 ```
 
 ## `new`
@@ -56,7 +72,7 @@ arx uninstall
 
 ## `doctor`
 
-Show which agents are wired and what each can enforce.
+Show which agents are wired and what each can enforce — and probe every installed pack's MCP servers with a real JSON-RPC `initialize`, reporting an actionable verdict (`connected` / `unauthorized` / `host-rejected` / `not-found` / `unreachable`).
 
 ```bash
 arx doctor

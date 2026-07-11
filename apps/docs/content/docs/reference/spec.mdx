@@ -73,6 +73,42 @@ A distributable reflex ships a manifest describing itself for the catalog:
 
 A reflex that takes configuration declares it under an optional `options` key in the manifest, so it's documented and editor-validated.
 
+## The `pack.json` manifest
+
+A [pack](/docs/concepts/packs) bundles capabilities — MCP servers, skills, session hooks, reflexes — plus the secrets and options they're configured with. `parsePackManifest` in `@agentreflex/core` validates this shape; installs fail loudly on anything malformed.
+
+```json
+{
+  "$schema": "https://agentreflex.dev/schema/pack-v1.json",
+  "name": "acme",                     // kebab-case, required
+  "title": "Acme",
+  "description": "Acme's tools, instructions, and session context.",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "homepage": "https://acme.dev",
+  "category": "search",               // registry category
+  "secrets": {
+    "acme_token": { "title": "Acme API token", "description": "acme.dev → Settings → Tokens", "required": true }
+  },
+  "options": {
+    "acme_url": { "title": "MCP endpoint", "default": "https://api.acme.dev/mcp" }
+  },
+  "mcp": {
+    "acme": {
+      "type": "http",                 // http is the supported transport
+      "url": "${options.acme_url}",
+      "headers": { "Authorization": "Bearer ${secrets.acme_token}" }
+    }
+  },
+  "skills": [{ "name": "acme-usage", "source": "skills/acme-usage" }],
+  "hooks": [{ "event": "SessionStart", "run": "hooks/session-context.mjs", "timeout": 15 }],
+  "reflexes": [{ "source": "reflexes/guard.mjs", "with": { "level": "strict" } }],
+  "agents": ["claude"]                // optional targeting; absent = every capable agent
+}
+```
+
+Rules: `name` is kebab-case; every `source`/`run` resolves inside the pack (no `..`); `${secrets.x}` / `${options.x}` references are interpolated at install time and unresolved references throw; hook events are `SessionStart`. Adapters carry pack capabilities through the optional `Adapter.pack` writer set (`mcp` / `skill` / `lifecycleHook` + removals) — an adapter without a writer skips that capability, reported, never fatal.
+
 ## Configuration
 
 A reflex can be configured by whoever installs it. The `.reflex/config.json` entry becomes an object with a `with` block, and the reflex reads it from `ctx.options`:

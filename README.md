@@ -96,6 +96,24 @@ npx agentreflex add no-secrets
 
 Browse them all on [agentreflex.dev](https://agentreflex.dev/#commons).
 
+## Packs — install whole capabilities, not just guardrails
+
+A **pack** bundles everything a real product needs to land in your agents — MCP servers
+(with auth), skills, session hooks, reflexes, and the token they're configured with —
+installed by one command and removed as cleanly:
+
+```bash
+arx add memcell            # prompts once for the token, wires every capable agent
+arx doctor                 # real MCP handshake per server, actionable verdicts
+arx remove memcell         # wiring, files, and stored secrets — gone
+```
+
+Packs live in *their product's* repo and are fetched from there; the registry only
+points. Secrets stay user-private (`~/.agentreflex/secrets.json`, `0600`) and are
+written only into user-private agent config — never into anything you might commit.
+See [the pack docs](https://docs.agentreflex.dev/concepts/packs) and
+[authoring guide](https://docs.agentreflex.dev/guides/authoring-a-pack).
+
 ## Repository
 
 ```
