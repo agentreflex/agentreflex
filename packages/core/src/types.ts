@@ -88,6 +88,41 @@ export interface HookResponse {
   exit?: number;
 }
 
+/** One file-touching outcome of a pack write. */
+export interface PackWriteResult {
+  file: string;
+  changed: boolean;
+}
+
+/** An interpolated MCP server — literal values, ready to write. */
+export interface ResolvedMcpServer {
+  type: "http";
+  url: string;
+  headers?: Record<string, string>;
+}
+
+/** How an agent receives pack capabilities. Every method is optional — an
+ *  absent method means "this agent can't carry that capability" and install
+ *  degrades gracefully (reported, never fatal), same philosophy as
+ *  `enforces`. All writes are project-scoped and land in USER-PRIVATE files
+ *  (never committable ones): secrets must not end up in a repo. */
+export interface PackWriter {
+  /** Wire a remote MCP server for this project. */
+  mcp?(name: string, server: ResolvedMcpServer, projectDir: string): PackWriteResult;
+  removeMcp?(name: string, projectDir: string): PackWriteResult;
+  /** Install a skill (a directory containing SKILL.md) for this project. */
+  skill?(name: string, sourceDir: string, projectDir: string): PackWriteResult;
+  removeSkill?(name: string, projectDir: string): PackWriteResult;
+  /** Wire a session-lifecycle hook script (absolute path, run with node). */
+  lifecycleHook?(
+    event: "SessionStart",
+    script: string,
+    timeout: number | undefined,
+    projectDir: string,
+  ): PackWriteResult;
+  removeLifecycleHook?(event: "SessionStart", script: string, projectDir: string): PackWriteResult;
+}
+
 /** Maps one agent's native hook dialect to and from the canonical model. */
 export interface Adapter {
   name: AgentName;
@@ -101,4 +136,6 @@ export interface Adapter {
   install(scope: Scope): { file: string; changed: boolean };
   uninstall(scope: Scope): { file: string; changed: boolean };
   isInstalled(scope: Scope): boolean;
+  /** Pack-capability writers (MCP / skills / lifecycle hooks). */
+  pack?: PackWriter;
 }

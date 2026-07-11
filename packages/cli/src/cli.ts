@@ -14,6 +14,16 @@ import {
   reflexDir,
   writeConfig,
 } from "./load.js";
+import {
+  type ConfigWithPacks,
+  applyPack,
+  gatherValues,
+  printApply,
+  probePacks,
+  registerPack,
+  removePack,
+  stagePack,
+} from "./packs.js";
 import { amber, banner, bar, bold, cyan, dim, head, lime, mark, pad, pill, white } from "./ui.js";
 
 const VERSION = "0.3.0"; // x-release-please-version
@@ -182,6 +192,20 @@ async function cmdDoctor(cwd: string): Promise<void> {
   console.log(
     `  ${lime("✦")} ${dim("deny")} ${lime("✓")} ${dim("everywhere")}    ${dim("ask")} ${lime("✓")} ${dim(askers)} ${amber("~")}${dim("gemini")}`,
   );
+
+  // packs: probe each MCP server with a real initialize handshake
+  const packs = (readConfig(cwd) as ConfigWithPacks).packs ?? [];
+  if (packs.length > 0) {
+    const probes = await probePacks(cwd);
+    for (const pr of probes) {
+      const ok = pr.verdict === "ok";
+      const light = ok ? lime("●") : amber("●");
+      const state = ok ? lime("connected") : amber(pr.verdict);
+      console.log(
+        `  ${light} ${dim("pack")} ${white(pr.pack)}${dim(`/${pr.server}`)}  ${state}${ok ? "" : `  ${dim(pr.detail)}`}`,
+      );
+    }
+  }
   console.log("");
 }
 
@@ -267,7 +291,48 @@ function githubRaw(spec: string): string {
   return `https://raw.githubusercontent.com/${owner}/${repo}/HEAD/${rest.join("/")}`;
 }
 
+/** Install a pack: stage files, gather secrets/options, apply to every
+ *  targeted agent, register in config. The composite counterpart of a
+ *  single-reflex add. */
+async function cmdAddPack(spec: string, cwd: string): Promise<void> {
+  const { manifest, dir } = await stagePack(spec, cwd);
+  const values = await gatherValues(manifest);
+  const results = applyPack(manifest, dir, cwd, values);
+  registerPack(
+    cwd,
+    manifest,
+    spec,
+    results.filter((r) => r.applied.length > 0).map((r) => r.agent),
+  );
+  printApply(manifest, results);
+  console.log(
+    `\n  ${mark} ${dim("installed — run")} ${lime("arx doctor")} ${dim("to verify, or")} ${lime(`arx remove ${manifest.name}`)} ${dim("to undo.")}\n`,
+  );
+}
+
+/** A spec names a pack when it's a directory holding pack.json (local) or a
+ *  URL/github: path that is (or contains) pack.json. */
+function looksLikePack(spec: string, cwd: string): boolean {
+  if (spec.startsWith(".") || spec.startsWith("/")) {
+    try {
+      return fs.existsSync(path.join(path.resolve(cwd, spec), "pack.json"));
+    } catch {
+      return false;
+    }
+  }
+  return /pack\.json$/.test(spec);
+}
+
 async function cmdAdd(spec: string, cwd: string, opts: Opts): Promise<void> {
+  if (looksLikePack(spec, cwd) || opts.pack) {
+    console.log(head("add · pack"));
+    try {
+      await cmdAddPack(spec, cwd);
+    } catch (err) {
+      console.log(`  ${dim(`could not add pack '${spec}': ${(err as Error).message}`)}\n`);
+    }
+    return;
+  }
   console.log(head("add"));
   try {
     // already sitting in .reflex/ — just reference it
@@ -288,14 +353,21 @@ async function cmdAdd(spec: string, cwd: string, opts: Opts): Promise<void> {
       code = await readLocation(url);
       filename = path.basename(new URL(url).pathname) || "reflex.mjs";
     } else {
-      // a name in the catalog
+      // a name in the catalog — reflex or pack
       const index =
         (typeof opts.registry === "string" && opts.registry) ||
         process.env.AGENTREFLEX_REGISTRY?.trim() ||
         REGISTRY_URL;
       const catalog = JSON.parse(await readLocation(index)) as {
         reflexes?: Array<{ name: string; bundle: string }>;
+        packs?: Array<{ name: string; pack: string; category?: string }>;
       };
+      const pack = catalog.packs?.find((r) => r.name === spec);
+      if (pack) {
+        console.log(head("add · pack"));
+        await cmdAddPack(resolveSibling(index, pack.pack), cwd);
+        return;
+      }
       const found = catalog.reflexes?.find((r) => r.name === spec);
       if (!found) {
         console.log(`  ${dim(`'${spec}' is not in the catalog (${index})`)}\n`);
@@ -314,6 +386,18 @@ async function cmdAdd(spec: string, cwd: string, opts: Opts): Promise<void> {
   } catch (err) {
     console.log(`  ${dim(`could not add '${spec}': ${(err as Error).message}`)}\n`);
   }
+}
+
+function cmdRemove(name: string, cwd: string): void {
+  console.log(head("remove"));
+  const { removed, notes } = removePack(cwd, name);
+  if (!removed) {
+    console.log(`  ${dim(`no pack named '${name}' is installed here`)}\n`);
+    return;
+  }
+  console.log(
+    `  ${lime("●")} removed ${white(name)}${notes.length ? ` ${dim(`from ${notes.join(", ")}`)}` : ""} ${dim("— config, files, wiring, and its stored secrets")}\n`,
+  );
 }
 
 function cmdNew(name: string, cwd: string): void {
@@ -459,10 +543,11 @@ function help(): void {
       `  ${dim("usage")}  ${bold(white("arx"))} ${dim("<command>")}   ${dim("alias: agentreflex")}`,
       "",
       row("init", "scaffold .reflex/ and wire your agents"),
-      row("add", "add a reflex  (name | url | github: | ./path)"),
+      row("add", "add a reflex or pack  (name | url | github: | ./path)"),
+      row("remove", "remove an installed pack (wiring, files, secrets)"),
       row("new", "scaffold a new reflex"),
       row("install", "wire the dispatcher into your agents"),
-      row("doctor", "show the capability matrix for your agents"),
+      row("doctor", "capability matrix + live pack/MCP checks"),
       row("dev", "simulate a tool call against your reflexes"),
       "",
       `  ${dim("dev")}    ${dim('arx dev "git push --force"')}  ${dim("·")} ${dim("--tool Read --paths .env")}`,
@@ -500,6 +585,8 @@ async function main(): Promise<void> {
       return cmdDoctor(cwd);
     case "add":
       return pos[0] ? cmdAdd(pos[0], cwd, opts) : help();
+    case "remove":
+      return pos[0] ? void cmdRemove(pos[0], cwd) : help();
     case "new":
       return pos[0] ? void cmdNew(pos[0], cwd) : help();
     case "dev":
