@@ -18,6 +18,10 @@ export interface PackEntry {
   version?: string;
   /** Which agents it was applied to (for removal + doctor). */
   agents: string[];
+  /** The option values this install resolved (defaults + --set overrides).
+   *  Doctor and reinstall read THESE, so they always see the same endpoint
+   *  the agents were wired with — never a silently different default. */
+  options?: Record<string, string>;
 }
 
 export interface ConfigWithPacks extends Config {
@@ -237,10 +241,11 @@ export function registerPack(
   manifest: PackManifest,
   source: string,
   agents: string[],
+  options: Record<string, string> = {},
 ): void {
   const config = readConfig(cwd) as ConfigWithPacks;
   config.packs = (config.packs ?? []).filter((p) => p.name !== manifest.name);
-  config.packs.push({ name: manifest.name, source, version: manifest.version, agents });
+  config.packs.push({ name: manifest.name, source, version: manifest.version, agents, options });
   config.reflexes ??= [];
   for (const r of manifest.reflexes ?? []) {
     const source = `./packs/${manifest.name}/${r.source}`;
@@ -301,7 +306,7 @@ export async function probePacks(cwd: string): Promise<McpProbe[]> {
     const manifest = parsePackManifest(fs.readFileSync(manifestFile, "utf8"));
     let values: PackValues;
     try {
-      values = await gatherValuesNonInteractive(manifest);
+      values = await gatherValuesNonInteractive(manifest, entry.options ?? {});
     } catch {
       for (const server of Object.keys(manifest.mcp ?? {}))
         out.push({
@@ -327,10 +332,13 @@ export async function probePacks(cwd: string): Promise<McpProbe[]> {
   return out;
 }
 
-async function gatherValuesNonInteractive(manifest: PackManifest): Promise<PackValues> {
+async function gatherValuesNonInteractive(
+  manifest: PackManifest,
+  optionOverrides: Record<string, string> = {},
+): Promise<PackValues> {
   const values: PackValues = { secrets: {}, options: {} };
   for (const [name, decl] of Object.entries(manifest.options ?? {}))
-    values.options[name] = decl.default ?? "";
+    values.options[name] = optionOverrides[name] ?? decl.default ?? "";
   const stored = readSecrets()[manifest.name] ?? {};
   for (const name of referencedSecrets(manifest)) {
     if (!stored[name]) throw new Error(`missing secret ${name}`);

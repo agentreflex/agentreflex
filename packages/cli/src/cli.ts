@@ -315,6 +315,7 @@ async function cmdAddPack(spec: string, cwd: string, opts: Opts): Promise<void> 
     manifest,
     spec,
     results.filter((r) => r.applied.length > 0).map((r) => r.agent),
+    values.options,
   );
   printApply(manifest, results);
   console.log(
