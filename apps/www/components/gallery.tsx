@@ -57,6 +57,13 @@ const REFLEXES: Reflex[] = [
     by: "core",
   },
   {
+    name: "scope-check",
+    instinct: "gate write-tool calls to declared path patterns",
+    trigger: "on Write · Edit · MultiEdit",
+    kind: "protective",
+    by: "core",
+  },
+  {
     name: "recover",
     instinct: "snapshot a file before the agent edits it",
     trigger: "on Edit · Write",

@@ -262,6 +262,16 @@ importers:
         specifier: ^22.10.0
         version: 22.20.0
 
+  reflexes/scope-check:
+    dependencies:
+      '@agentreflex/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.0
+
   reflexes/stay-in-repo:
     dependencies:
       '@agentreflex/core':

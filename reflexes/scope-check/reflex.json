@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agentreflex.dev/schema/reflex-v1.json",
+  "name": "scope-check",
+  "title": "Scope check",
+  "description": "Blocks writes outside declared path patterns, with an informative reason the agent can relay to the user.",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "agentreflex",
+  "official": true,
+  "events": ["onToolCall"],
+  "capabilities": {
+    "decisions": ["pass", "deny"],
+    "reads": ["paths", "cwd", "options"]
+  },
+  "options": {
+    "allow": {
+      "type": "string[]",
+      "description": "Glob patterns for allowed write paths, relative to project root. Writes outside these patterns are denied."
+    }
+  },
+  "entry": "dist/index.js",
+  "tags": ["hygiene", "scope", "protective"]
+}
