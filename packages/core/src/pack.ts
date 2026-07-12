@@ -48,8 +48,11 @@ export interface PackSkill {
 
 /** The session-lifecycle moments a pack can hook. `SessionStart` runs once as
  *  a session opens (context seeding); `UserPromptSubmit` runs on every prompt
- *  before the model sees it (deterministic per-prompt work, e.g. recall). */
-export type PackHookEvent = "SessionStart" | "UserPromptSubmit";
+ *  before the model sees it (deterministic per-prompt work, e.g. recall);
+ *  `Stop` runs each time the agent finishes a response (deterministic
+ *  post-turn work, e.g. capture); `SessionEnd` runs once as the session
+ *  closes (flush/finalize work, e.g. consolidation). */
+export type PackHookEvent = "SessionStart" | "UserPromptSubmit" | "Stop" | "SessionEnd";
 
 /** A lifecycle hook: a script the agent runs at a lifecycle moment.
  *  `run` is a JS file relative to the pack root, executed with node. */
@@ -147,9 +150,14 @@ export function parsePackManifest(json: string): PackManifest {
       throw new Error(`skill '${s.name}': source must stay inside the pack`);
   }
   for (const h of m.hooks ?? []) {
-    if (h.event !== "SessionStart" && h.event !== "UserPromptSubmit")
+    if (
+      h.event !== "SessionStart" &&
+      h.event !== "UserPromptSubmit" &&
+      h.event !== "Stop" &&
+      h.event !== "SessionEnd"
+    )
       throw new Error(
-        `hook event '${String(h.event)}' is not supported (SessionStart | UserPromptSubmit)`,
+        `hook event '${String(h.event)}' is not supported (SessionStart | UserPromptSubmit | Stop | SessionEnd)`,
       );
     if (!h.run || h.run.includes("..")) throw new Error("every hook needs a `run` inside the pack");
   }

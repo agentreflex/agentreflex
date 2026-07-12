@@ -115,13 +115,13 @@ export interface PackWriter {
   removeSkill?(name: string, projectDir: string): PackWriteResult;
   /** Wire a session-lifecycle hook script (absolute path, run with node). */
   lifecycleHook?(
-    event: "SessionStart" | "UserPromptSubmit",
+    event: "SessionStart" | "UserPromptSubmit" | "Stop" | "SessionEnd",
     script: string,
     timeout: number | undefined,
     projectDir: string,
   ): PackWriteResult;
   removeLifecycleHook?(
-    event: "SessionStart" | "UserPromptSubmit",
+    event: "SessionStart" | "UserPromptSubmit" | "Stop" | "SessionEnd",
     script: string,
     projectDir: string,
   ): PackWriteResult;

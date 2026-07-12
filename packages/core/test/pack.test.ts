@@ -38,7 +38,19 @@ describe("parsePackManifest", () => {
       parsePackManifest(
         JSON.stringify({ name: "x", hooks: [{ event: "PreCompact", run: "h.mjs" }] }),
       ),
-    ).toThrow(/SessionStart \| UserPromptSubmit/);
+    ).toThrow(/SessionStart \| UserPromptSubmit \| Stop \| SessionEnd/);
+    // the full lifecycle: seed, per-prompt, per-response, close
+    expect(
+      parsePackManifest(
+        JSON.stringify({
+          name: "x",
+          hooks: [
+            { event: "Stop", run: "capture.mjs", timeout: 30 },
+            { event: "SessionEnd", run: "close.mjs", timeout: 30 },
+          ],
+        }),
+      ).hooks,
+    ).toHaveLength(2);
     expect(() =>
       parsePackManifest(JSON.stringify({ name: "x", mcp: { s: { type: "stdio", url: "u" } } })),
     ).toThrow(/only type "http"/);

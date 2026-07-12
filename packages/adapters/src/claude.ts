@@ -132,7 +132,7 @@ const claudePack = {
   },
 
   lifecycleHook(
-    event: "SessionStart" | "UserPromptSubmit",
+    event: "SessionStart" | "UserPromptSubmit" | "Stop" | "SessionEnd",
     script: string,
     timeout: number | undefined,
     projectDir: string,
@@ -153,7 +153,7 @@ const claudePack = {
   },
 
   removeLifecycleHook(
-    event: "SessionStart" | "UserPromptSubmit",
+    event: "SessionStart" | "UserPromptSubmit" | "Stop" | "SessionEnd",
     script: string,
     projectDir: string,
   ): PackWriteResult {
