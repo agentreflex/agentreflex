@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.0](https://github.com/agentreflex/agentreflex/compare/core-v0.2.0...core-v0.3.0) (2026-07-13)
+
+
+### Features
+
+* **core:** per-reflex fail-open isolation + shared path-glob matching ([#15](https://github.com/agentreflex/agentreflex/issues/15)) ([2e55e32](https://github.com/agentreflex/agentreflex/commit/2e55e32baa6f8fc32b8ce2694448488d21031d74))
+* packs — install whole capabilities, not just guardrails ([#17](https://github.com/agentreflex/agentreflex/issues/17)) ([9b93956](https://github.com/agentreflex/agentreflex/commit/9b939567265b3ddf5094fa61130afa74a929136a))
+
 ## [0.2.0](https://github.com/agentreflex/agentreflex/compare/core-v0.1.1...core-v0.2.0) (2026-06-28)
 
 

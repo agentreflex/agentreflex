@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.0](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.3.0...agentreflex-v0.4.0) (2026-07-13)
+
+
+### Features
+
+* packs — install whole capabilities, not just guardrails ([#17](https://github.com/agentreflex/agentreflex/issues/17)) ([9b93956](https://github.com/agentreflex/agentreflex/commit/9b939567265b3ddf5094fa61130afa74a929136a))
+
+
+### Bug Fixes
+
+* **cli:** keep the hook dispatcher from crashing at startup; test on Windows ([21f5132](https://github.com/agentreflex/agentreflex/commit/21f513267cdad52c374376d4333d971739642da6))
+* **cli:** starter reflex reason matches what it blocks ([871b7c9](https://github.com/agentreflex/agentreflex/commit/871b7c9c25deb0578ebdbe909b2917b0b2afe21f))
+
 ## [0.3.0](https://github.com/agentreflex/agentreflex/compare/agentreflex-v0.2.0...agentreflex-v0.3.0) (2026-06-28)
 
 

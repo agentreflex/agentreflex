@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/agentreflex/agentreflex/compare/adapters-v0.1.1...adapters-v0.2.0) (2026-07-13)
+
+
+### Features
+
+* packs — install whole capabilities, not just guardrails ([#17](https://github.com/agentreflex/agentreflex/issues/17)) ([9b93956](https://github.com/agentreflex/agentreflex/commit/9b939567265b3ddf5094fa61130afa74a929136a))
+
 ## [0.1.1](https://github.com/agentreflex/agentreflex/compare/adapters-v0.1.0...adapters-v0.1.1) (2026-06-26)
 
 
