@@ -42,6 +42,7 @@ const VALUE_FLAGS = new Set([
   "--file",
   "--with",
   "--set",
+  "--output",
 ]);
 
 function parseArgs(rest: string[]): { opts: Opts; pos: string[] } {
@@ -124,7 +125,12 @@ async function cmdHook(agent: string): Promise<void> {
       if (res.stderr) process.stderr.write(res.stderr);
       if (res.exit && res.exit !== 0) process.exit(res.exit);
     } else {
-      await runToolResult(reflexes, ctx);
+      const reaction = await runToolResult(reflexes, ctx);
+      // An adapter without formatResult can't carry reactions — degrade to a no-op.
+      const res = adapter.formatResult?.(reaction) ?? {};
+      if (res.stdout) process.stdout.write(res.stdout);
+      if (res.stderr) process.stderr.write(res.stderr);
+      if (res.exit && res.exit !== 0) process.exit(res.exit);
     }
   } catch {
     // fail open: agentreflex never blocks or crashes the agent on its own error
@@ -520,8 +526,33 @@ async function cmdDev(opts: Opts, pos: string[], cwd: string): Promise<void> {
   console.log(`  ${subject}`);
 
   if (event === "onToolResult") {
-    await runToolResult(reflexes, { event, agent, tool, command, paths, cwd, raw: {}, options });
-    console.log(`  ${mark} ${dim("onToolResult ran (side effects only — never blocks)")}\n`);
+    const output = typeof opts.output === "string" ? opts.output : undefined;
+    const success = opts.fail ? false : undefined;
+    const reaction = await runToolResult(reflexes, {
+      event,
+      agent,
+      tool,
+      command,
+      paths,
+      cwd,
+      raw: {},
+      output,
+      success,
+      options,
+    });
+    const rVerdict =
+      reaction.action === "block"
+        ? lime("block")
+        : reaction.action === "inject"
+          ? cyan("inject")
+          : dim("none");
+    const rDetail =
+      reaction.action === "block"
+        ? dim(` — ${reaction.reason}`)
+        : reaction.action === "inject"
+          ? dim(` — ${reaction.context}`)
+          : "";
+    console.log(`  ${mark} ${rVerdict}${rDetail}\n`);
     return;
   }
 
@@ -564,7 +595,7 @@ function help(): void {
       row("dev", "simulate a tool call against your reflexes"),
       "",
       `  ${dim("dev")}    ${dim('arx dev "git push --force"')}  ${dim("·")} ${dim("--tool Read --paths .env")}`,
-      `         ${dim("--reflex <name>")} ${dim("·")} ${dim("--file ./r.mjs")} ${dim("·")} ${dim("--with '{json}'")} ${dim("·")} ${dim("--agent")} ${dim("·")} ${dim("--event onToolResult")}`,
+      `         ${dim("--reflex <name>")} ${dim("·")} ${dim("--file ./r.mjs")} ${dim("·")} ${dim("--with '{json}'")} ${dim("·")} ${dim("--agent")} ${dim("·")} ${dim("--event onToolResult --output '<text>' [--fail]")}`,
       `  ${dim("flags")}  ${dim("--dir <path>")} ${dim("run in another folder")}  ${dim("·")} ${dim("--scope")}  ${dim("·")} ${dim("--set opt=value (packs)")}`,
       "",
       `  ${dim("docs")}   ${cyan("https://docs.agentreflex.dev")}`,

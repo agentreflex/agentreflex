@@ -17,7 +17,8 @@ const reflexesDir = path.join(repo, "reflexes");
 
 const EVENTS = new Set(["onToolCall", "onToolResult"]);
 const DECISIONS = new Set(["pass", "deny", "ask", "modify"]);
-const READS = new Set(["command", "paths", "cwd", "raw", "options"]);
+const REACTIONS = new Set(["inject", "block"]);
+const READS = new Set(["command", "paths", "cwd", "raw", "options", "output", "success"]);
 
 const only = process.argv[2];
 const names = fs
@@ -39,6 +40,8 @@ if (needsBuild) {
   execFileSync("pnpm", ["-r", "--filter", "./packages/*", "--filter", "./reflexes/*", "build"], {
     cwd: repo,
     stdio: "inherit",
+    // On Windows pnpm is pnpm.cmd, which execFileSync can only spawn via a shell.
+    shell: process.platform === "win32",
   });
 }
 
@@ -75,9 +78,13 @@ for (const name of names) {
   for (const e of events) if (!EVENTS.has(e)) err(`unknown event "${e}"`);
 
   const decisions = manifest.capabilities?.decisions ?? [];
-  if (!Array.isArray(decisions) || decisions.length === 0)
-    err("capabilities.decisions must list the verdicts the reflex returns");
+  const reactions = manifest.capabilities?.reactions ?? [];
+  if (!Array.isArray(decisions)) err("capabilities.decisions must be an array");
+  if (!Array.isArray(reactions)) err("capabilities.reactions must be an array");
+  if (decisions.length === 0 && reactions.length === 0)
+    err("capabilities must list the decisions and/or reactions the reflex returns");
   for (const d of decisions) if (!DECISIONS.has(d)) err(`unknown decision "${d}"`);
+  for (const r of reactions) if (!REACTIONS.has(r)) err(`unknown reaction "${r}"`);
   for (const r of manifest.capabilities?.reads ?? [])
     if (!READS.has(r)) warn.push(`unknown read "${r}"`);
 
@@ -129,6 +136,16 @@ for (const name of names) {
     for (const d of decisions)
       if (d !== "pass" && !used.has(d))
         warn.push(`reflex.json declares "${d}" but code never returns it`);
+
+    const usedReactions = new Set();
+    if (/\binject\s*\(|action:\s*["']inject["']/.test(src)) usedReactions.add("inject");
+    if (/\bblock\s*\(|action:\s*["']block["']/.test(src)) usedReactions.add("block");
+    for (const r of usedReactions)
+      if (!reactions.includes(r))
+        warn.push(`code returns reaction "${r}" but reflex.json doesn't declare it`);
+    for (const r of reactions)
+      if (!usedReactions.has(r))
+        warn.push(`reflex.json declares reaction "${r}" but code never returns it`);
   } else {
     warn.push("no src/index.ts (authored in JS only? fine, but TS is the official bar)");
   }

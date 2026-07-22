@@ -6,6 +6,7 @@ import type {
   Decision,
   HookResponse,
   PackWriteResult,
+  Reaction,
   ReflexContext,
   ResolvedMcpServer,
   Scope,
@@ -17,14 +18,35 @@ const MATCHER = "Bash|Edit|MultiEdit|Write";
 interface Settings {
   hooks?: {
     PreToolUse?: Array<{ matcher?: string; hooks: Array<{ type: string; command: string }> }>;
+    PostToolUse?: Array<{ matcher?: string; hooks: Array<{ type: string; command: string }> }>;
     [k: string]: unknown;
   };
   [k: string]: unknown;
 }
+
+/** The two tool-hook events the adapter wires: PreToolUse carries decisions,
+ *  PostToolUse carries reactions. */
+const HOOK_EVENTS = ["PreToolUse", "PostToolUse"] as const;
 interface Payload {
+  hook_event_name?: string;
   tool_name?: string;
   tool_input?: Record<string, unknown>;
+  tool_response?: unknown;
   cwd?: string;
+}
+
+/** Best-effort text + success from Claude's tool_response, which is a string
+ *  for some tools and a { stdout, stderr, … } shape for others. */
+function normalizeResponse(response: unknown): { output?: string; success?: boolean } {
+  if (typeof response === "string") return { output: response };
+  if (response === null || typeof response !== "object") return {};
+  const r = response as Record<string, unknown>;
+  const parts: string[] = [];
+  if (typeof r.stdout === "string" && r.stdout) parts.push(r.stdout);
+  if (typeof r.stderr === "string" && r.stderr) parts.push(r.stderr);
+  const output = parts.length > 0 ? parts.join("\n") : undefined;
+  const success = typeof r.success === "boolean" ? r.success : undefined;
+  return { output, success };
 }
 
 const dir = (s: Scope) => path.join(s === "global" ? os.homedir() : process.cwd(), ".claude");
@@ -184,22 +206,29 @@ export const claude: Adapter = {
   name: "claude",
   label: "Claude Code",
   enforces: true,
-  capabilities: { events: ["onToolCall"], decisions: ["pass", "deny", "ask"] },
+  capabilities: {
+    events: ["onToolCall", "onToolResult"],
+    decisions: ["pass", "deny", "ask"],
+    reactions: ["inject", "block"],
+  },
 
   parse(payload): ReflexContext {
     const p = (payload ?? {}) as Payload;
     const input = p.tool_input ?? {};
     const paths: string[] = [];
     if (typeof input.file_path === "string") paths.push(input.file_path);
-    return {
-      event: "onToolCall",
-      agent: "claude",
+    const base = {
+      agent: "claude" as const,
       tool: p.tool_name ?? "",
       command: typeof input.command === "string" ? input.command : undefined,
       paths,
       cwd: p.cwd ?? process.cwd(),
       raw: payload,
     };
+    if (p.hook_event_name === "PostToolUse") {
+      return { event: "onToolResult", ...base, ...normalizeResponse(p.tool_response) };
+    }
+    return { event: "onToolCall", ...base };
   },
 
   format(decision: Decision): HookResponse {
@@ -215,33 +244,56 @@ export const claude: Adapter = {
     };
   },
 
+  formatResult(reaction: Reaction): HookResponse {
+    if (reaction.action === "inject") {
+      return {
+        stdout: JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: "PostToolUse",
+            additionalContext: reaction.context,
+          },
+        }),
+      };
+    }
+    if (reaction.action === "block") {
+      return { stdout: JSON.stringify({ decision: "block", reason: reaction.reason }) };
+    }
+    return {};
+  },
+
   install(scope) {
     const file = settingsFile(scope);
     const settings = read(file);
     settings.hooks ??= {};
-    settings.hooks.PreToolUse ??= [];
-    const pre = settings.hooks.PreToolUse;
-    const already = pre.some((m) => m.hooks?.some((h) => h.command === HOOK));
-    if (!already) {
-      pre.push({ matcher: MATCHER, hooks: [{ type: "command", command: HOOK }] });
-      write(file, settings);
+    let changed = false;
+    for (const event of HOOK_EVENTS) {
+      settings.hooks[event] ??= [];
+      const entries = settings.hooks[event] as NonNullable<Settings["hooks"]>["PreToolUse"];
+      const already = entries?.some((m) => m.hooks?.some((h) => h.command === HOOK));
+      if (!already) {
+        entries?.push({ matcher: MATCHER, hooks: [{ type: "command", command: HOOK }] });
+        changed = true;
+      }
     }
-    return { file, changed: !already };
+    if (changed) write(file, settings);
+    return { file, changed };
   },
 
   uninstall(scope) {
     const file = settingsFile(scope);
     if (!fs.existsSync(file)) return { file, changed: false };
     const settings = read(file);
-    const pre = settings.hooks?.PreToolUse;
-    if (!pre) return { file, changed: false };
     let changed = false;
-    for (const m of pre) {
-      const before = m.hooks?.length ?? 0;
-      if (m.hooks) m.hooks = m.hooks.filter((h) => !h.command.includes("hook --agent"));
-      if ((m.hooks?.length ?? 0) !== before) changed = true;
+    for (const event of HOOK_EVENTS) {
+      const entries = settings.hooks?.[event];
+      if (!entries) continue;
+      for (const m of entries) {
+        const before = m.hooks?.length ?? 0;
+        if (m.hooks) m.hooks = m.hooks.filter((h) => !h.command.includes("hook --agent"));
+        if ((m.hooks?.length ?? 0) !== before) changed = true;
+      }
+      if (settings.hooks) settings.hooks[event] = entries.filter((m) => (m.hooks?.length ?? 0) > 0);
     }
-    if (settings.hooks) settings.hooks.PreToolUse = pre.filter((m) => (m.hooks?.length ?? 0) > 0);
     if (changed) write(file, settings);
     return { file, changed };
   },

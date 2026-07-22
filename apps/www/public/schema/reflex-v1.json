@@ -60,10 +60,16 @@
           "items": { "enum": ["pass", "deny", "ask", "modify"] },
           "description": "Verdicts this reflex can return. Declare only what it actually emits."
         },
+        "reactions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "enum": ["inject", "block"] },
+          "description": "Reactions this reflex can return from onToolResult. Declare only what it actually emits."
+        },
         "reads": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "enum": ["command", "paths", "cwd", "raw", "options"] },
+          "items": { "enum": ["command", "paths", "cwd", "raw", "options", "output", "success"] },
           "description": "Context fields this reflex inspects."
         },
         "writes": {

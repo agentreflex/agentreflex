@@ -13,7 +13,7 @@ A reflex's default export implements `Reflex`:
 interface Reflex {
   name: string;
   onToolCall?(ctx: ToolCallContext): Decision | Promise<Decision>;
-  onToolResult?(ctx: ToolResultContext): void | Promise<void>;
+  onToolResult?(ctx: ToolResultContext): Reaction | void | Promise<Reaction | void>;
 }
 ```
 
@@ -34,7 +34,16 @@ interface ToolCallContext {
 }
 ```
 
-`ToolResultContext` has the same shape with `event: "onToolResult"`.
+`ToolResultContext` has the same shape with `event: "onToolResult"`, plus the result itself where the adapter can extract it:
+
+```ts
+interface ToolResultContext {
+  // …same fields as ToolCallContext, and:
+  event: "onToolResult";
+  output?: string;   // the tool's output text
+  success?: boolean; // whether the tool reported success — undefined when the agent doesn't say
+}
+```
 
 ## Decision
 
@@ -49,6 +58,19 @@ type Decision =
 ```
 
 Helpers build them: `pass()`, `deny(reason)`, `ask(reason)`, `modify(args, reason?)`. Reflexes evaluate in order; the first non-`pass` wins.
+
+## Reaction
+
+`onToolResult` may return one (returning nothing keeps the old observer behaviour):
+
+```ts
+type Reaction =
+  | { action: "none" }
+  | { action: "inject"; context: string }  // feed context back into the agent's conversation
+  | { action: "block"; reason: string };   // tell the agent the result must not stand
+```
+
+Helpers: `none()`, `inject(context)`, `block(reason)`. Every handler always runs; the first `block` wins the aggregate, otherwise `inject` contexts concatenate in declaration order. An adapter that can't carry reactions degrades them to no-ops.
 
 ## The `reflex.json` manifest
 

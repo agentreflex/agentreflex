@@ -88,7 +88,7 @@ export default defineReflex({
 
 **Protective** — `abide` · `no-force-push` · `no-secrets` · `no-rm-rf` · `no-curl-bash` · `stay-in-repo` · `ask-on-prod` · `scope-check`
 
-**Proactive** — `recover` · `prefer-rg` · `conventional-commits`
+**Proactive** — `recover` · `prefer-rg` · `conventional-commits` · `loop-breaker`
 
 ```bash
 npx agentreflex add no-secrets
