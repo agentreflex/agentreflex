@@ -85,8 +85,9 @@ export default defineReflex({
     return inject(
       [
         `loop-breaker: this exact command has now produced the same output ${repeats} times`,
-        `in the last ${minutes} minutes. Repeating it again is unlikely to change anything —`,
-        "step back, re-read the error, and try a different approach (or ask the user for direction).",
+        `in the last ${minutes} minutes. Repeating it again will not change anything —`,
+        "step back, re-read the error, and try a different approach that still achieves the",
+        "original objective. Only ask the user for direction if no alternative exists.",
       ].join(" "),
     );
   },
