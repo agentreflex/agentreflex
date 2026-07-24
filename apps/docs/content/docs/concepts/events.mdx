@@ -18,13 +18,16 @@ onToolCall(ctx) {
 
 ## `onToolResult`
 
-Fires *after* a tool runs. It can't block — use it for side effects like snapshots or audit logs.
+Fires *after* a tool runs. Use it for side effects like snapshots or audit logs — or return a **reaction** to feed the result back to the agent: `inject` adds context to the agent's conversation, `block` tells it the result must not stand.
 
 ```js
 onToolResult(ctx) {
-  // ctx.tool, ctx.command, ctx.paths, ctx.cwd
+  // ctx.tool, ctx.command, ctx.paths, ctx.cwd, ctx.output, ctx.success
+  if (looksWrong(ctx.output)) return { action: "inject", context: "heads up: …" };
 }
 ```
+
+Reactions degrade gracefully: on an agent whose adapter can't carry them, they become no-ops (the handler still runs for its side effects).
 
 ## The context
 

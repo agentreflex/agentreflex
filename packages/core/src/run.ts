@@ -1,4 +1,4 @@
-import type { Decision, Reflex, ToolCallContext, ToolResultContext } from "./types.js";
+import type { Decision, Reaction, Reflex, ToolCallContext, ToolResultContext } from "./types.js";
 
 /**
  * Run reflexes for a tool call. The first reflex to return a non-`pass` decision
@@ -21,14 +21,27 @@ export async function runToolCall(reflexes: Reflex[], ctx: ToolCallContext): Pro
   return { action: "pass" };
 }
 
-/** Run every reflex's post-tool side effect. These never block, and one
- *  throwing observer never stops the rest. */
-export async function runToolResult(reflexes: Reflex[], ctx: ToolResultContext): Promise<void> {
+/**
+ * Run every reflex's post-tool handler and aggregate their reactions.
+ *
+ * Every handler always runs (a block doesn't starve later observers). The first
+ * `block` wins the aggregate; otherwise `inject` contexts concatenate in
+ * declaration order; otherwise `none`. One throwing reflex never stops the rest.
+ */
+export async function runToolResult(reflexes: Reflex[], ctx: ToolResultContext): Promise<Reaction> {
+  let blocked: Reaction | undefined;
+  const injected: string[] = [];
   for (const reflex of reflexes) {
     try {
-      await reflex.onToolResult?.(ctx);
+      const reaction = await reflex.onToolResult?.(ctx);
+      if (!reaction || reaction.action === "none") continue;
+      if (reaction.action === "block") blocked ??= reaction;
+      else injected.push(reaction.context);
     } catch {
       // fail open per reflex
     }
   }
+  if (blocked) return blocked;
+  if (injected.length > 0) return { action: "inject", context: injected.join("\n\n") };
+  return { action: "none" };
 }
