@@ -81,7 +81,7 @@ describe("claude adapter", () => {
     const c = claude.parse({
       hook_event_name: "PostToolUseFailure",
       tool_name: "Bash",
-      tool_input: { command: "node -e \"process.exit(1)\"" },
+      tool_input: { command: 'node -e "process.exit(1)"' },
       error: "Exit code 1\nconnection refused",
       is_interrupt: false,
       cwd: "/p",
