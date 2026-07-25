@@ -14,6 +14,8 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// On Windows pnpm is pnpm.cmd, which execFileSync can only spawn via a shell.
+const shell = process.platform === "win32";
 const [name, ...rest] = process.argv.slice(2);
 
 if (!name) {
@@ -32,9 +34,14 @@ if (!fs.existsSync(cli)) {
   execFileSync("pnpm", ["-r", "--filter", "./packages/*", "build"], {
     cwd: repo,
     stdio: "inherit",
+    shell,
   });
 }
-execFileSync("pnpm", ["--filter", `./reflexes/${name}`, "build"], { cwd: repo, stdio: "inherit" });
+execFileSync("pnpm", ["--filter", `./reflexes/${name}`, "build"], {
+  cwd: repo,
+  stdio: "inherit",
+  shell,
+});
 
 const res = spawnSync("node", [cli, "dev", "--reflex", name, ...rest], {
   cwd: repo,

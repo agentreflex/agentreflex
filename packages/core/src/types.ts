@@ -39,6 +39,10 @@ export interface ToolResultContext {
   paths: string[];
   cwd: string;
   raw: unknown;
+  /** The tool's output text, where the adapter can extract it. */
+  output?: string;
+  /** Whether the tool reported success — undefined when the agent doesn't say. */
+  success?: boolean;
   /** Options this reflex was configured with in `.reflex/config.json` (`with`). */
   options?: Record<string, unknown>;
 }
@@ -63,11 +67,26 @@ export const modify = (args: Record<string, unknown>, reason?: string): Decision
   reason,
 });
 
+/** How a reflex reacts to a tool result. `inject` feeds context back into the
+ *  agent's conversation; `block` tells the agent the result must not stand. */
+export type Reaction =
+  | { action: "none" }
+  | { action: "inject"; context: string }
+  | { action: "block"; reason: string };
+
+export type ReactionAction = Reaction["action"];
+
+export const none = (): Reaction => ({ action: "none" });
+export const inject = (context: string): Reaction => ({ action: "inject", context });
+export const block = (reason: string): Reaction => ({ action: "block", reason });
+
 /** A reflex: a named bundle of lifecycle handlers — the unit you install and share. */
 export interface Reflex {
   name: string;
   onToolCall?(ctx: ToolCallContext): Decision | Promise<Decision>;
-  onToolResult?(ctx: ToolResultContext): void | Promise<void>;
+  /** Returning nothing (or `none()`) keeps the old observer behaviour. */
+  // biome-ignore lint/suspicious/noConfusingVoidType: void keeps plain observer handlers (no return statement) assignable
+  onToolResult?(ctx: ToolResultContext): Reaction | void | Promise<Reaction | void>;
 }
 
 /** Identity helper for authoring (types + autocomplete, no runtime cost). */
@@ -79,6 +98,8 @@ export function defineReflex(reflex: Reflex): Reflex {
 export interface Capabilities {
   events: Array<ReflexContext["event"]>;
   decisions: DecisionAction[];
+  /** Reactions the agent can carry back after a tool result — absent = none. */
+  reactions?: ReactionAction[];
 }
 
 /** What the dispatcher emits back to the agent: stdout payload, stderr, and/or exit code. */
@@ -137,6 +158,10 @@ export interface Adapter {
   parse(payload: unknown): ReflexContext;
   /** Serialize a decision to the agent's native response (stdout/stderr/exit). */
   format(decision: Decision): HookResponse;
+  /** Serialize a reaction to the agent's native post-tool response. Absent =
+   *  the agent can't carry reactions and they degrade to no-ops. The context
+   *  lets dialects that distinguish success/failure events respond in kind. */
+  formatResult?(reaction: Reaction, ctx?: ToolResultContext): HookResponse;
   install(scope: Scope): { file: string; changed: boolean };
   uninstall(scope: Scope): { file: string; changed: boolean };
   isInstalled(scope: Scope): boolean;

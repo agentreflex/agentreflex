@@ -82,18 +82,24 @@ arx dev --reflex my-reflex --tool Edit --paths src/app.ts --with '{"allow":["src
 
 > Options go under the entry's `with` block. A top-level key in `config.json` is not read.
 
-## Side effects with `onToolResult`
+## Reacting to results with `onToolResult`
 
-`onToolResult` runs *after* a tool and can't block — use it for snapshots, logging, or post-hoc checks.
+`onToolResult` runs *after* a tool. Use it for snapshots, logging, or post-hoc checks — or return a [reaction](/docs/reference/spec#reaction) to feed something back to the agent: `inject(context)` adds context to its conversation, `block(reason)` rejects the result.
 
 ```ts
+import { defineReflex, inject } from "@agentreflex/core";
+
 export default defineReflex({
   name: "audit-writes",
   onToolResult(ctx) {
     if (ctx.tool === "Write") log(ctx.paths);
+    if (ctx.tool === "Bash" && /EADDRINUSE/.test(ctx.output ?? ""))
+      return inject("that port is already taken — a dev server is likely running.");
   },
 });
 ```
+
+Returning nothing is fine — the reflex is then a pure observer. On agents whose adapter can't carry reactions they degrade to no-ops.
 
 ## Test it
 
@@ -113,7 +119,7 @@ arx dev --tool Write --paths src/app.ts,.env  # multiple paths, comma-separated
 Other flags:
 
 - `--agent <name>` — pretend a specific agent is calling (default `claude`).
-- `--event onToolResult` — run the post-tool side effect instead of the pre-tool check.
+- `--event onToolResult` — run the post-tool handler instead of the pre-tool check; add `--output "<text>"` to simulate the tool's output and see the reaction.
 - `--file ./path/to/reflex.mjs` — test one reflex file directly, ignoring `.reflex/config.json`.
 
 By default `dev` runs the reflexes wired in `.reflex/`. See the full types in the [spec](/docs/reference/spec).

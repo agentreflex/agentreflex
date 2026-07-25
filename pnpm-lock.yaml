@@ -202,6 +202,16 @@ importers:
         specifier: ^22.10.0
         version: 22.20.0
 
+  reflexes/loop-breaker:
+    dependencies:
+      '@agentreflex/core':
+        specifier: workspace:*
+        version: link:../../packages/core
+    devDependencies:
+      '@types/node':
+        specifier: ^22.10.0
+        version: 22.20.0
+
   reflexes/no-curl-bash:
     dependencies:
       '@agentreflex/core':

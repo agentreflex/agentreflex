@@ -1,0 +1,28 @@
+{
+  "$schema": "https://agentreflex.dev/schema/reflex-v1.json",
+  "name": "loop-breaker",
+  "title": "Loop breaker",
+  "description": "Detects an agent re-running the same failing command and injects a nudge to step back and rethink.",
+  "version": "0.0.0",
+  "license": "MIT",
+  "author": "agentreflex",
+  "official": true,
+  "events": ["onToolResult"],
+  "capabilities": {
+    "decisions": [],
+    "reactions": ["inject"],
+    "reads": ["command", "output", "cwd", "options"]
+  },
+  "options": {
+    "threshold": {
+      "type": "number",
+      "description": "Identical command+output repeats before the nudge fires. Default 3."
+    },
+    "windowMinutes": {
+      "type": "number",
+      "description": "Sliding window in minutes — older repeats are forgotten. Default 10."
+    }
+  },
+  "entry": "dist/index.js",
+  "tags": ["feedback", "productivity", "proactive"]
+}

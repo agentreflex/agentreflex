@@ -84,6 +84,13 @@ const REFLEXES: Reflex[] = [
     kind: "proactive",
     by: "core",
   },
+  {
+    name: "loop-breaker",
+    instinct: "notice the agent repeating a failing command",
+    trigger: "on Bash results · same output ×3",
+    kind: "proactive",
+    by: "core",
+  },
 ];
 
 const KIND_COLOR: Record<Kind, string> = {

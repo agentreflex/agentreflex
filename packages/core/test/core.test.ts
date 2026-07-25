@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { commandMatches, parseCommand } from "../src/command.js";
-import { runToolCall } from "../src/run.js";
-import { ask, deny, pass } from "../src/types.js";
-import type { Reflex, ToolCallContext } from "../src/types.js";
+import { runToolCall, runToolResult } from "../src/run.js";
+import { ask, block, deny, inject, none, pass } from "../src/types.js";
+import type { Reflex, ToolCallContext, ToolResultContext } from "../src/types.js";
 
 const ctx = (command: string): ToolCallContext => ({
   event: "onToolCall",
@@ -12,6 +12,19 @@ const ctx = (command: string): ToolCallContext => ({
   paths: [],
   cwd: "/p",
   raw: {},
+});
+
+const resultCtx = (over: Partial<ToolResultContext> = {}): ToolResultContext => ({
+  event: "onToolResult",
+  agent: "claude",
+  tool: "Bash",
+  command: "npm test",
+  paths: [],
+  cwd: "/p",
+  raw: {},
+  output: "1 failing",
+  success: false,
+  ...over,
 });
 
 describe("parseCommand", () => {
@@ -107,10 +120,84 @@ describe("configurable reflex (ctx.options)", () => {
   });
 });
 
+describe("runToolResult (reactions)", () => {
+  const observer: Reflex = { name: "observer", onToolResult: () => {} };
+  const injector: Reflex = { name: "injector", onToolResult: () => inject("heads up") };
+  const blocker: Reflex = { name: "blocker", onToolResult: () => block("result is bad") };
+
+  it("returns none when every reflex observes silently", async () => {
+    expect(await runToolResult([observer], resultCtx())).toEqual({ action: "none" });
+  });
+
+  it("treats a void return and an explicit none() the same", async () => {
+    const explicit: Reflex = { name: "explicit", onToolResult: () => none() };
+    expect(await runToolResult([observer, explicit], resultCtx())).toEqual({ action: "none" });
+  });
+
+  it("surfaces a single inject", async () => {
+    expect(await runToolResult([observer, injector], resultCtx())).toEqual({
+      action: "inject",
+      context: "heads up",
+    });
+  });
+
+  it("concatenates injects from multiple reflexes in declaration order", async () => {
+    const second: Reflex = { name: "second", onToolResult: () => inject("also this") };
+    expect(await runToolResult([injector, second], resultCtx())).toEqual({
+      action: "inject",
+      context: "heads up\n\nalso this",
+    });
+  });
+
+  it("a block wins over injects, but every handler still runs", async () => {
+    let laterRan = false;
+    const later: Reflex = {
+      name: "later",
+      onToolResult: () => {
+        laterRan = true;
+        return inject("ignored");
+      },
+    };
+    expect(await runToolResult([injector, blocker, later], resultCtx())).toEqual({
+      action: "block",
+      reason: "result is bad",
+    });
+    expect(laterRan).toBe(true);
+  });
+
+  it("isolates a throwing reflex — the rest still react", async () => {
+    const broken: Reflex = {
+      name: "broken",
+      onToolResult: () => {
+        throw new TypeError("bad config");
+      },
+    };
+    expect(await runToolResult([broken, injector], resultCtx())).toEqual({
+      action: "inject",
+      context: "heads up",
+    });
+  });
+
+  it("threads output and success through the context", async () => {
+    let seen: { output?: string; success?: boolean } = {};
+    const reader: Reflex = {
+      name: "reader",
+      onToolResult: (c) => {
+        seen = { output: c.output, success: c.success };
+      },
+    };
+    await runToolResult([reader], resultCtx({ output: "boom", success: false }));
+    expect(seen).toEqual({ output: "boom", success: false });
+  });
+});
+
 describe("decision helpers", () => {
   it("build the canonical shapes", () => {
     expect(deny("r")).toEqual({ action: "deny", reason: "r" });
     expect(ask("r")).toEqual({ action: "ask", reason: "r" });
     expect(pass()).toEqual({ action: "pass" });
+    expect(inject("c")).toEqual({ action: "inject", context: "c" });
+    expect(block("r")).toEqual({ action: "block", reason: "r" });
+    expect(none()).toEqual({ action: "none" });
   });
 });
