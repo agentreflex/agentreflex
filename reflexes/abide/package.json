@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@agentreflex/core": "workspace:*",
-    "yaml": "^2.6.1"
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0"
+    "@types/node": "^22.20.2"
   }
 }
